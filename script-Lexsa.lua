@@ -1,4 +1,4 @@
--- LEXSA MENU V26: CATCH & TAME SPECIAL
+-- LEXSA MENU V27: CATCH & TAME (RARE FARM)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -8,7 +8,7 @@ local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
 -- Setup UI
-ScreenGui.Name = "LexsaV26"
+ScreenGui.Name = "LexsaV27"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -29,7 +29,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA: CATCH & TAME"
+TextLabel.Text = "LEXSA: RARE FARM"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
 
@@ -61,19 +61,49 @@ local function addToggle(name, color, func)
 end
 
 -- ==========================================
--- 1. MONSTER ESP (MELIHAT MONSTER DARI JAUH)
+-- 1. AUTO FARM RARE (TELEPORT KE MONSTER RARE)
 -- ==========================================
-addToggle("MONSTER ESP", Color3.fromRGB(150, 0, 200), function(state)
-    _G.MonsterEsp = state
+addToggle("FARM RARE", Color3.fromRGB(255, 0, 255), function(state)
+    _G.AutoFarm = state
     task.spawn(function()
-        while _G.MonsterEsp do
+        while _G.AutoFarm do
             pcall(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    -- Mencari objek yang biasanya menjadi monster di game ini
-                    if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
+                    -- Mencari monster dengan nama "Legendary", "Mythical", atau "Rare"
+                    if v:IsA("Model") and v:FindFirstChild("Humanoid") and 
+                       (v.Name:find("Legendary") or v.Name:find("Mythical") or v.Name:find("Rare")) then
+                        
+                        local root = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
+                        if root then
+                            -- Teleport ke atas monster agar aman
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 5, 0)
+                            -- Otomatis Memukul
+                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                            task.wait(0.1)
+                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                        end
+                    end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end)
+end)
+
+-- ==========================================
+-- 2. MONSTER ESP (RARE ONLY - WARNA UNGU)
+-- ==========================================
+addToggle("RARE ESP", Color3.fromRGB(150, 0, 200), function(state)
+    _G.RareEsp = state
+    task.spawn(function()
+        while _G.RareEsp do
+            pcall(function()
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    if v:IsA("Model") and v:FindFirstChild("Humanoid") and 
+                       (v.Name:find("Legendary") or v.Name:find("Mythical") or v.Name:find("Rare")) then
                         if not v:FindFirstChild("Highlight") then
                             local h = Instance.new("Highlight", v)
-                            h.FillColor = Color3.fromRGB(255, 255, 0) -- Kuning untuk monster
+                            h.FillColor = Color3.fromRGB(255, 0, 255) -- Ungu untuk Rare
                         end
                     end
                 end
@@ -84,19 +114,7 @@ addToggle("MONSTER ESP", Color3.fromRGB(150, 0, 200), function(state)
 end)
 
 -- ==========================================
--- 2. AUTO ATTACK / CLICK
--- ==========================================
-addToggle("AUTO ATTACK", Color3.fromRGB(200, 0, 0), function(state)
-    _G.AutoAtk = state
-    while _G.AutoAtk do
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        task.wait(0.1)
-    end
-end)
-
--- ==========================================
--- 3. SPEED BOOST (STABIL)
+-- 3. SPEED BOOST & GOD MODE (STABIL)
 -- ==========================================
 addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
     _G.Spd = state
@@ -104,19 +122,14 @@ addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
         pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50 end)
         task.wait(0.2)
     end
-    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
 end)
 
--- ==========================================
--- 4. INF STAMINA / JUMP
--- ==========================================
-addToggle("HIGH JUMP", Color3.fromRGB(0, 150, 0), function(state)
-    _G.Jump = state
-    while _G.Jump do
-        pcall(function() game.Players.LocalPlayer.Character.Humanoid.JumpPower = 80 end)
-        task.wait(0.2)
+addToggle("GOD MODE", Color3.fromRGB(60, 60, 60), function(state)
+    _G.God = state
+    while _G.God do
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.Health = 100 end)
+        task.wait(0.1)
     end
-    pcall(function() game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50 end)
 end)
 
 -- Minimize System
