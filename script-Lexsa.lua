@@ -1,4 +1,5 @@
--- LEXSA V4.3: ULTIMATE BRAINROT (LAVA SURVIVAL)
+-- LEXSA V5: LAVA GOD (FINAL BYPASS)
+-- [2026-02-06] Fitur: Lava Walking, Auto Farm, Stealth Mode
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,29 +8,29 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
-ScreenGui.Name = "LexsaV43"
+ScreenGui.Name = "LexsaV5"
 ScreenGui.Parent = game:GetService("CoreGui")
 
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
 OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 180)
 OpenBtn.Text = "LEXSA"
 OpenBtn.Visible = false
 OpenBtn.Draggable = true
 
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Frame.Position = UDim2.new(0.3, 0, 0.2, 0)
-Frame.Size = UDim2.new(0, 230, 0, 380)
+Frame.Size = UDim2.new(0, 230, 0, 350)
 Frame.Active = true
 Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 45)
-TextLabel.Text = "LEXSA V4.3: BYPASS"
+TextLabel.Text = "LEXSA V5: LAVA GOD"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(100, 0, 255)
+TextLabel.BackgroundColor3 = Color3.fromRGB(0, 200, 150)
 
 ScrollFrame.Parent = Frame
 ScrollFrame.Size = UDim2.new(1, -10, 1, -100)
@@ -56,31 +57,30 @@ local function addToggle(name, color, func)
     end)
 end
 
--- 1. SMART SKYWALK (Ikuti kaki, anti ujung map)
-addToggle("SMART SKYWALK", Color3.fromRGB(0, 200, 150), function(state)
-    _G.SkyWalk = state
+-- ==========================================
+-- 1. LAVA WALKING (Celah yang baru ditemukan)
+-- ==========================================
+addToggle("LAVA WALKING", Color3.fromRGB(255, 80, 0), function(state)
+    _G.LavaWalk = state
     task.spawn(function()
-        while _G.SkyWalk do
+        while _G.LavaWalk do
             pcall(function()
                 local char = game.Players.LocalPlayer.Character
-                local hrp = char:WaitForChild("HumanoidRootPart")
-                local p = Instance.new("Part")
-                p.Size = Vector3.new(8, 1, 8)
-                p.CFrame = hrp.CFrame * CFrame.new(0, -3.5, 0)
-                p.Anchored = true
-                p.Transparency = 0.5
-                p.Color = Color3.fromRGB(255, 255, 255)
-                p.Parent = workspace
-                task.wait(0.05)
-                p:Destroy()
+                -- Memaksa lava menjadi solid di bawah kaki
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    if v.Name:lower():find("lava") and v:IsA("BasePart") then
+                        v.CanCollide = true
+                        v.TouchInterest:Destroy() -- Hapus deteksi mati
+                    end
+                end
             end)
-            task.wait()
+            task.wait(2)
         end
     end)
 end)
 
--- 2. AUTO FARM BRAINROT
-addToggle("AUTO FARM ITEM", Color3.fromRGB(0, 150, 255), function(state)
+-- 2. AUTO FARM (Grab Brainrot)
+addToggle("AUTO FARM", Color3.fromRGB(0, 150, 255), function(state)
     _G.AutoFarm = state
     task.spawn(function()
         while _G.AutoFarm do
@@ -92,32 +92,15 @@ addToggle("AUTO FARM ITEM", Color3.fromRGB(0, 150, 255), function(state)
                     end
                 end
             end)
-            task.wait(1)
+            task.wait(0.5)
         end
     end)
 end)
 
--- 3. CHAT SPAMMER BRAINROT
-local msgs = {"SKIBIDI RIZZ!", "FANUM TAX!", "SIGMA MOGGING!", "GYATT DETECTED!", "LAVA IS LAME!"}
-addToggle("BRAINROT CHAT", Color3.fromRGB(255, 0, 150), function(state)
-    _G.ChatSpam = state
-    task.spawn(function()
-        while _G.ChatSpam do
-            local msg = msgs[math.random(1, #msgs)]
-            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-            task.wait(4)
-        end
-    end)
-end)
-
--- 4. SPEED BOOST
-addToggle("SPEED BOOST", Color3.fromRGB(50, 50, 50), function(state)
-    _G.Speed = state
-    while _G.Speed do
-        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50 end)
-        task.wait(0.5)
-    end
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+-- 3. SPEED & JUMP (Support)
+addToggle("GOD SPEED", Color3.fromRGB(100, 100, 100), function(state)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = state and 60 or 16
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = state and 100 or 50
 end)
 
 MinimizeBtn.Parent = Frame
