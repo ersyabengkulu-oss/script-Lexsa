@@ -1,32 +1,39 @@
--- V5.6: WALL BREAKER & ESCAPE
-addToggle("NOCLIP WALL", Color3.fromRGB(150, 0, 255), function(state)
-    _G.Noclip = state
-    game:GetService("RunService").Stepped:Connect(function()
-        if _G.Noclip then
-            pcall(function()
-                for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = false
-                    end
-                end
-            end)
+-- V5.7: CHAOS EXPERIMENT (FLING & LAVA GOD)
+addToggle("FLING MODE", Color3.fromRGB(255, 0, 0), function(state)
+    _G.Fling = state
+    task.spawn(function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        
+        while _G.Fling do
+            -- Eksperimen fisik: Berputar sangat cepat (Velocity Hack)
+            local velocity = hrp.Velocity
+            hrp.Velocity = Vector3.new(velocity.X, 0, velocity.Z) + Vector3.new(0, 1000, 0)
+            task.wait(0.05)
+            hrp.Velocity = velocity
+            
+            -- Menambahkan gaya putar agar pemain lain terpental
+            local bv = Instance.new("BodyAngularVelocity")
+            bv.AngularVelocity = Vector3.new(0, 999999, 0)
+            bv.MaxTorque = Vector3.new(0, math.huge, 0)
+            bv.P = 1250
+            bv.Parent = hrp
+            task.wait(0.1)
+            bv:Destroy()
+            task.wait()
         end
     end)
 end)
 
-addToggle("AUTO WALL ESCAPE", Color3.fromRGB(0, 255, 100), function(state)
-    _G.WallEscape = state
-    task.spawn(function()
-        while _G.WallEscape do
-            pcall(function()
-                -- Cek jika lava mulai naik (biasanya ada objek 'Lava' yang posisinya naik)
-                local lava = game.Workspace:FindFirstChild("Lava", true)
-                if lava and lava.Position.Y > -10 then 
-                    -- Teleport ke koordinat aman di balik dinding yang kamu temukan
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-45, 10, 50) -- Koordinat area hijau
-                end
-            end)
-            task.wait(2)
+-- INTEGRASI NOCLIP UNTUK KABUR KE DINDING AMAN
+addToggle("GHOST ESCAPE", Color3.fromRGB(150, 0, 255), function(state)
+    _G.Ghost = state
+    game:GetService("RunService").Stepped:Connect(function()
+        if _G.Ghost then
+            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
         end
     end)
 end)
