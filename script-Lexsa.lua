@@ -1,4 +1,4 @@
--- LEXSA MENU V24: SMOOTH AIM & FOV
+-- LEXSA MENU V25: GEN FIX & ANTI-EMOTE PARRY
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -8,7 +8,7 @@ local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
 -- Setup UI
-ScreenGui.Name = "LexsaV24"
+ScreenGui.Name = "LexsaV25"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -29,7 +29,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA V24: SMOOTH"
+TextLabel.Text = "LEXSA V25: FIXED"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -61,89 +61,96 @@ local function addToggle(name, color, func)
 end
 
 -- ==========================================
--- AUTO AIM (SMOOTH + FOV)
+-- 1. AUTO GEN (SISTEM SCAN LEBIH KUAT)
 -- ==========================================
-addToggle("SMOOTH AIM", Color3.fromRGB(200, 0, 0), function(state)
-    _G.Aim = state
-    local cam = game.Workspace.CurrentCamera
-    local lp = game.Players.LocalPlayer
-    local fov = 150 -- Luas area deteksi (semakin kecil, semakin tidak mengganggu)
-    
+addToggle("AUTO GEN", Color3.fromRGB(0, 100, 200), function(state)
+    _G.AutoRepair = state
     task.spawn(function()
-        while _G.Aim do
+        while _G.AutoRepair do
             pcall(function()
-                local closest = nil
-                local shortestDist = fov
-                
-                for _, p in pairs(game.Players:GetPlayers()) do
-                    if p ~= lp and p.Character and p.Character:FindFirstChild("Head") then
-                        local pos, onScreen = cam:WorldToViewportPoint(p.Character.Head.Position)
-                        if onScreen then
-                            local mouseDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
-                            if mouseDist < shortestDist then
-                                closest = p.Character.Head
-                                shortestDist = mouseDist
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    -- Mencari segala jenis objek Generator
+                    if v:IsA("Model") and (v.Name:find("Generator") or v.Name:find("Gen")) then
+                        local root = v:FindFirstChildWhichIsA("BasePart") or v.PrimaryPart
+                        if root then
+                            -- Tambahkan ESP Hijau agar terlihat
+                            if not root:FindFirstChild("Highlight") then
+                                local h = Instance.new("Highlight", root)
+                                h.FillColor = Color3.fromRGB(0, 255, 0)
+                            end
+                            -- Jarak deteksi diperluas ke 15 meter
+                            local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                            if dist < 15 then
+                                local prompt = v:FindFirstChildOfClass("ProximityPrompt") or v:FindFirstChild("Prompt", true)
+                                if prompt then fireproximityprompt(prompt) end
                             end
                         end
                     end
                 end
-                
-                if closest then
-                    -- Pergerakan kamera dibuat smooth (0.15) agar tidak langsung sentak
-                    cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.Position, closest.Position), 0.15)
+            end)
+            task.wait(0.3)
+        end
+    end)
+end)
+
+-- ==========================================
+-- 2. AUTO PARRY (ANTI-EMOTE & LEBIH CEPAT)
+-- ==========================================
+addToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
+    _G.Parry = state
+    task.spawn(function()
+        while _G.Parry do
+            pcall(function()
+                for _, p in pairs(game.Players:GetPlayers()) do
+                    if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                        -- Deteksi jarak musuh menyerang
+                        if dist < 11 then
+                            -- Menggunakan sistem KeyPress kilat agar menu emot tidak terbuka
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                            task.wait(0.01) -- Sangat cepat
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                        end
+                    end
                 end
+            end)
+            task.wait(0.05)
+        end
+    end)
+end)
+
+-- ==========================================
+-- 3. FITUR LAINNYA (OPTIMIZED)
+-- ==========================================
+addToggle("SMOOTH AIM", Color3.fromRGB(200, 0, 0), function(state)
+    _G.Aim = state
+    local cam = game.Workspace.CurrentCamera
+    task.spawn(function()
+        while _G.Aim do
+            pcall(function()
+                local target = nil
+                local dist = 150
+                for _, p in pairs(game.Players:GetPlayers()) do
+                    if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                        local pos, vis = cam:WorldToViewportPoint(p.Character.Head.Position)
+                        if vis then
+                            local mDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
+                            if mDist < dist then target = p.Character.Head dist = mDist end
+                        end
+                    end
+                end
+                if target then cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.Position, target.Position), 0.1) end
             end)
             task.wait()
         end
     end)
 end)
 
--- ==========================================
--- FITUR LAINNYA (TETAP SAMA)
--- ==========================================
-addToggle("ALL ESP", Color3.fromRGB(150, 0, 200), function(state)
-    _G.Esp = state
-    task.spawn(function()
-        while _G.Esp do
-            pcall(function()
-                for _, p in pairs(game.Players:GetPlayers()) do
-                    if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
-                        Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
-                    end
-                end
-                for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if (v.Name:find("Generator") or v.Name:find("Gen")) and v:IsA("BasePart") and not v:FindFirstChild("Highlight") then
-                        Instance.new("Highlight", v).FillColor = Color3.fromRGB(0, 255, 0)
-                    end
-                end
-            end)
-            task.wait(1)
-        end
-    end)
-end)
-
-addToggle("AUTO GEN", Color3.fromRGB(0, 100, 200), function(state)
-    _G.Repair = state
-    while _G.Repair do
-        pcall(function()
-            for _, v in pairs(game.Workspace:GetDescendants()) do
-                if (v.Name:find("Generator") or v.Name:find("Gen")) then
-                    local p = v:FindFirstChildOfClass("ProximityPrompt") or v:FindFirstChild("Prompt", true)
-                    if p and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude < 12 then
-                        fireproximityprompt(p)
-                    end
-                end
-            end
-        end)
-        task.wait(0.5)
-    end
-end)
-
 addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
     _G.Spd = state
     while _G.Spd do
         pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 45 end)
-        task.wait(0.2)
+        task.wait(0.1)
     end
 end)
 
