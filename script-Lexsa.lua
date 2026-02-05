@@ -1,4 +1,4 @@
--- LEXSA MENU V33: CATCH & TAME (TOTAL SHOP BAN)
+-- LEXSA MENU V34: CATCH & TAME (ANTI-SHOPPER)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,9 +7,8 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
-ScreenGui.Name = "LexsaV33"
+ScreenGui.Name = "LexsaV34"
 ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.ResetOnSpawn = false
 
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -28,9 +27,9 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA V33: FINAL FIX"
+TextLabel.Text = "LEXSA V34: ANTI-SHOP"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(255, 100, 0) -- Warna Oranye
+TextLabel.BackgroundColor3 = Color3.fromRGB(100, 0, 200) -- Ungu
 
 ScrollFrame.Parent = Frame
 ScrollFrame.Size = UDim2.new(1, -10, 1, -90)
@@ -50,7 +49,6 @@ local function addToggle(name, color, func)
     btn.Text = name .. ": OFF"
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
     btn.MouseButton1Click:Connect(function()
         active = not active
         btn.Text = active and name .. ": ON" or name .. ": OFF"
@@ -59,11 +57,8 @@ local function addToggle(name, color, func)
     end)
 end
 
--- KOORDINAT TOKO (ZONA LARANGAN)
-local ShopPos = Vector3.new(0, 0, 0) -- Akan diupdate otomatis saat script jalan
-
 -- ==========================================
--- V33: ULTRA FARM DENGAN BLACKLIST AREA
+-- V34: ULTRA FARM (BLOCK INTERACTIVE PROMPTS)
 -- ==========================================
 addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
     _G.Farm = state
@@ -72,19 +67,17 @@ addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
             pcall(function()
                 local target = nil
                 local dist = 1000
-                local myPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
                 
                 for _, v in pairs(game.Workspace:GetDescendants()) do
+                    -- HANYA incar hewan yang punya Humanoid, BUKAN NPC/Player
                     if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
-                        local hrp = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
-                        if hrp then
-                            -- CEK: Apakah ini NPC Toko? (Biasanya NPC tidak punya HP maksimal besar)
-                            local hum = v:FindFirstChild("Humanoid")
-                            if hum.MaxHealth > 1 and hum.MaxHealth < 500000 then 
-                                -- CEK: Apakah lokasinya terlalu dekat dengan NPC Toko makanan?
-                                -- Kita anggap area toko ada di sekitar koordinat NPC tersebut
-                                local d = (myPos - hrp.Position).Magnitude
-                                if d < dist and d > 10 then -- Jangan nempel yang terlalu dekat/NPC
+                        -- FILTER: Abaikan semua objek yang punya "ProximityPrompt" (Tombol interaksi Toko)
+                        if not v:FindFirstChildWhichIsA("ProximityPrompt", true) then
+                            local hrp = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
+                            if hrp then
+                                local d = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                                -- Abaikan yang terlalu dekat dengan titik spawn/toko tengah
+                                if d < dist and hrp.Position.Magnitude > 50 then 
                                     target = v dist = d 
                                 end
                             end
@@ -94,32 +87,34 @@ addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
                 
                 if target then
                     local root = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 0, 4)
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 0, 5)
                     
+                    -- Klik pelan agar tidak memicu menu toko yang tidak sengaja terbuka
                     local vim = game:GetService("VirtualInputManager")
                     vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                    task.wait(0.1)
+                    task.wait(0.05)
                     vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                    -- Gunakan tombol E hanya jika tidak ada menu belanja di layar
+                    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    task.wait(0.05)
                     vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                 end
             end)
-            task.wait(0.5)
+            task.wait(0.8) -- Sedikit lebih lambat agar tidak gampang bug di menu
         end
     end)
 end)
 
--- V33: ESP YANG LEBIH TERANG
+-- FITUR LAINNYA
 addToggle("HEWAN ESP", Color3.fromRGB(150, 0, 255), function(state)
     _G.Esp = state
     task.spawn(function()
         while _G.Esp do
             for _, v in pairs(game.Workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
-                    if not v:FindFirstChild("Highlight") then
+                    if not v:FindFirstChildWhichIsA("ProximityPrompt", true) and not v:FindFirstChild("Highlight") then
                         local h = Instance.new("Highlight", v)
-                        h.FillColor = Color3.fromRGB(0, 255, 0) -- Hijau terang biar kelihatan
-                        h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        h.FillColor = Color3.fromRGB(0, 255, 0)
                     end
                 end
             end
