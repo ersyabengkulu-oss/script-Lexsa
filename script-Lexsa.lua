@@ -1,32 +1,35 @@
--- LEXSA V8.3: MODULE BYPASS [2026-02-06]
+-- LEXSA V8.5: FULL AUTHENTICATION BYPASS [2026-02-06]
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
-    CatchBtn.Text = catching and "BYPASS: ON" or "BYPASS: OFF"
+    CatchBtn.Text = catching and "GACOR TOTAL: ON" or "GACOR TOTAL: OFF"
     
     task.spawn(function()
-        -- Mencari jalur Net secara dinamis sesuai hasil SimpleSpy kamu
         local Net = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net
         
         while catching do
             pcall(function()
-                -- Step 1: Simulasi Melempar Kail (Charge)
-                Net["RF/ChargeFishingRod"]:InvokeServer(100)
-                task.wait(0.2) 
+                -- 1. WAJIB: Paksa Pegang Pancingan (Slot 1)
+                Net["RE/EquipToolFromHotbar"]:FireServer(1)
+                task.wait(0.1)
                 
-                -- Step 2: Trigger Game Start (PENTING!)
-                Net["RF/RequestFishingMinigame"]:InvokeServer()
+                -- 2. Lempar Kail
+                Net["RF/ChargeFishingRod"]:InvokeServer(100)
                 task.wait(0.2)
                 
-                -- Step 3: Selesaikan Pancingan dengan Argument "Fish"
+                -- 3. Trigger Minigame Start
+                Net["RF/RequestFishingMinigame"]:InvokeServer()
+                task.wait(0.1)
+                
+                -- 4. Langsung Tangkap dengan Kata Kunci "Fish"
                 Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
                 
-                -- Step 4: Klaim Hadiah
+                -- 5. Klaim Hadiah agar Masuk Tas
                 Net["RE/ClaimNotification"]:FireServer("Fish")
                 
-                print("LEXSA: Remote Sequence Sent!")
+                print("LEXSA: Full Sequence Sent!")
             end)
-            task.wait(0.5) -- Delay mengikuti Vora Hub
+            task.wait(0.5) -- Delay biar gak dicurigai server
         end
     end)
 end)
