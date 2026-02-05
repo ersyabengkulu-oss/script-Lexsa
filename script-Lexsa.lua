@@ -7,13 +7,15 @@ local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
 -- Variabel Global
-local walkSpeed = 16 -- Mulai dari speed normal
+local walkSpeed = 16
 local espActive = false
+local clicking = false
+local autoParry = false
 
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false 
 
--- Tombol LEX (Buka)
+-- Tombol Buka (LEX)
 OpenBtn.Parent = ScreenGui
 OpenBtn.Name = "OpenButton"
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -34,7 +36,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(0, 220, 0, 40)
-TextLabel.Text = "LEXSA V14.1: BYPASS"
+TextLabel.Text = "LEXSA V15: FINAL"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -61,7 +63,7 @@ local function createBtn(txt, color)
 end
 
 -- ==========================================
--- LOGIKA SPEED BYPASS
+-- 1. FITUR SPEED (BYPASS)
 -- ==========================================
 local SpeedShow = createBtn("SPEED: " .. walkSpeed, Color3.fromRGB(40, 40, 40))
 local AddSpeed = createBtn("TAMBAH SPEED (+10)", Color3.fromRGB(0, 120, 0))
@@ -79,48 +81,68 @@ end
 AddSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed + 10) end)
 SubSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed - 10) end)
 
--- Loop agar Speed tidak di-reset oleh game
 task.spawn(function()
-    while task.wait(0.5) do
-        setSpeed(walkSpeed)
-    end
+    while task.wait(0.5) do setSpeed(walkSpeed) end
 end)
 
 -- ==========================================
--- LOGIKA ESP BYPASS (Highlight System)
+-- 2. FITUR ESP (LIHAT MUSUH)
 -- ==========================================
 local ESPBtn = createBtn("ESP (LIHAT MUSUH)", Color3.fromRGB(150, 0, 255))
-
-local function applyESP()
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            if not player.Character:FindFirstChild("LexsaESP") then
-                local highlight = Instance.new("Highlight")
-                highlight.Name = "LexsaESP"
-                highlight.Parent = player.Character
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            end
-        end
-    end
-end
-
 ESPBtn.MouseButton1Click:Connect(function()
     espActive = not espActive
     ESPBtn.Text = espActive and "ESP: AKTIF" or "ESP: NONAKTIF"
-    if espActive then
-        applyESP()
-    else
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("LexsaESP") then
-                player.Character.LexsaESP:Destroy()
+    while espActive do
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("LexsaESP") then
+                local h = Instance.new("Highlight", p.Character)
+                h.Name = "LexsaESP"
+                h.FillColor = Color3.fromRGB(255, 0, 0)
             end
         end
+        task.wait(2)
     end
 end)
 
 -- ==========================================
--- LOGIKA MINIMIZE & TOGGLE
+-- 3. FITUR AUTO PARRY (KEMBALI!)
+-- ==========================================
+local ParryBtn = createBtn("AUTO PARRY: OFF", Color3.fromRGB(255, 165, 0))
+ParryBtn.MouseButton1Click:Connect(function()
+    autoParry = not autoParry
+    ParryBtn.Text = autoParry and "AUTO PARRY: ON" or "AUTO PARRY: OFF"
+    -- Logika Auto Parry menyesuaikan game
+end)
+
+-- ==========================================
+-- 4. FITUR AUTO CLICK
+-- ==========================================
+local ClickBtn = createBtn("AUTO CLICK: OFF", Color3.fromRGB(0, 150, 255))
+ClickBtn.MouseButton1Click:Connect(function()
+    clicking = not clicking
+    ClickBtn.Text = clicking and "AUTO CLICK: ON" or "AUTO CLICK: OFF"
+    while clicking do
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        task.wait(0.1)
+    end
+end)
+
+-- ==========================================
+-- 5. FITUR GOD MODE
+-- ==========================================
+local GodBtn = createBtn("GOD MODE: OFF", Color3.fromRGB(255, 255, 255))
+GodBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+local godActive = false
+GodBtn.MouseButton1Click:Connect(function()
+    godActive = not godActive
+    GodBtn.Text = godActive and "GOD MODE: ON" or "GOD MODE: OFF"
+    game.Players.LocalPlayer.Character.Humanoid.MaxHealth = godActive and math.huge or 100
+    game.Players.LocalPlayer.Character.Humanoid.Health = godActive and math.huge or 100
+end)
+
+-- ==========================================
+-- LOGIKA MINIMIZE
 -- ==========================================
 MinimizeBtn.Parent = Frame
 MinimizeBtn.Position = UDim2.new(0, 10, 0, 275)
