@@ -1,4 +1,4 @@
--- LEXSA MENU V31: SMART TARGET (CATCH & TAME)
+-- LEXSA MENU V32: CATCH & TAME (ANTI-NPC FIX)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,7 +7,7 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
-ScreenGui.Name = "LexsaV31"
+ScreenGui.Name = "LexsaV32"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -28,9 +28,9 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA V31: SMART"
+TextLabel.Text = "LEXSA V32: ANTI-NPC"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
+TextLabel.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- Merah biar sangar
 
 ScrollFrame.Parent = Frame
 ScrollFrame.Size = UDim2.new(1, -10, 1, -90)
@@ -50,6 +50,7 @@ local function addToggle(name, color, func)
     btn.Text = name .. ": OFF"
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
     btn.MouseButton1Click:Connect(function()
         active = not active
         btn.Text = active and name .. ": ON" or name .. ": OFF"
@@ -59,7 +60,7 @@ local function addToggle(name, color, func)
 end
 
 -- ==========================================
--- SMART FARM: HANYA TELEPORT KE HEWAN
+-- ULTRA FARM V32 (IGNORE NPC & SHOP AREA)
 -- ==========================================
 addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
     _G.Farm = state
@@ -69,14 +70,15 @@ addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
                 local target = nil
                 local dist = 1000
                 
-                -- Mencari di folder spesifik (Workspace.Animals biasanya untuk game ini)
-                -- Jika folder tidak ketemu, mencari Model yang punya HP dan BUKAN NPC/Player
                 for _, v in pairs(game.Workspace:GetDescendants()) do
+                    -- Mencari hewan, bukan NPC atau Player
                     if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
-                        -- FILTER: Jangan ke NPC Toko atau Ikan Bak
-                        if not v.Name:find("NPC") and not v.Name:find("Shop") and not v.Name:find("Fish") then
+                        -- FILTER EXTRA: Abaikan yang namanya mencurigakan (NPC, Merchant, Food)
+                        local n = v.Name:lower()
+                        if not n:find("npc") and not n:find("shop") and not n:find("merchant") and not n:find("food") then
                             local hrp = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
                             if hrp then
+                                -- FILTER JARAK: Jangan teleport ke area sekitar toko (biasanya di tengah map)
                                 local d = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
                                 if d < dist then target = v dist = d end
                             end
@@ -86,7 +88,8 @@ addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
                 
                 if target then
                     local root = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 0, 4)
+                    -- Teleport di samping target agar tidak bug
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 0, 5)
                     
                     local vim = game:GetService("VirtualInputManager")
                     vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
@@ -96,23 +99,21 @@ addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
                     vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                 end
             end)
-            task.wait(0.2)
+            task.wait(0.5)
         end
     end)
 end)
 
--- SMART ESP: HANYA WARNAI HEWAN
-addToggle("MONSTER ESP", Color3.fromRGB(150, 0, 255), function(state)
+-- MONSTER ESP (FILTERED)
+addToggle("HEWAN ESP", Color3.fromRGB(150, 0, 255), function(state)
     _G.Esp = state
     task.spawn(function()
         while _G.Esp do
             for _, v in pairs(game.Workspace:GetDescendants()) do
                 if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
-                     if not v.Name:find("NPC") and not v.Name:find("Shop") then
-                        if not v:FindFirstChild("Highlight") then
-                            local h = Instance.new("Highlight", v)
-                            h.FillColor = Color3.fromRGB(255, 255, 0)
-                        end
+                    if not v.Name:lower():find("npc") and not v:FindFirstChild("Highlight") then
+                        local h = Instance.new("Highlight", v)
+                        h.FillColor = Color3.fromRGB(0, 255, 255) -- Cyan biar beda sama NPC
                     end
                 end
             end
