@@ -8,14 +8,13 @@ local OpenBtn = Instance.new("TextButton")
 
 -- Variabel Global
 local walkSpeed = 16
-local espActive = false
-local clicking = false
-local autoParry = false
+local autoAim = false
+local autoRepair = false
 
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false 
 
--- 1. Tombol Buka (LEX) - Tetap Ada di Layar
+-- Tombol Buka (LEX)
 OpenBtn.Parent = ScreenGui
 OpenBtn.Name = "OpenButton"
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -26,7 +25,7 @@ OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenBtn.Visible = false 
 OpenBtn.Draggable = true
 
--- 2. Menu Utama
+-- Menu Utama
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Frame.Position = UDim2.new(0.3, 0, 0.2, 0)
@@ -36,7 +35,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(0, 220, 0, 40)
-TextLabel.Text = "LEXSA V15: FINAL"
+TextLabel.Text = "LEXSA V15.5: GENERATOR"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -63,75 +62,78 @@ local function createBtn(txt, color)
 end
 
 -- ==========================================
--- FITUR-FITUR UTAMA
+-- 1. FITUR AUTO AIM (PISTOL)
 -- ==========================================
-local SpeedShow = createBtn("SPEED: " .. walkSpeed, Color3.fromRGB(40, 40, 40))
-local AddSpeed = createBtn("TAMBAH SPEED (+10)", Color3.fromRGB(0, 120, 0))
-local SubSpeed = createBtn("KURANG SPEED (-10)", Color3.fromRGB(120, 0, 0))
-
-local function setSpeed(value)
-    walkSpeed = value
-    SpeedShow.Text = "SPEED: " .. walkSpeed
-    local lp = game.Players.LocalPlayer
-    if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-        lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = walkSpeed
-    end
-end
-
-AddSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed + 10) end)
-SubSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed - 10) end)
-
--- ESP Feature
-local ESPBtn = createBtn("ESP (LIHAT MUSUH)", Color3.fromRGB(150, 0, 255))
-ESPBtn.MouseButton1Click:Connect(function()
-    espActive = not espActive
-    ESPBtn.Text = espActive and "ESP: AKTIF" or "ESP: NONAKTIF"
-    while espActive do
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("LexsaESP") then
-                local h = Instance.new("Highlight", p.Character)
-                h.Name = "LexsaESP"
-                h.FillColor = Color3.fromRGB(255, 0, 0)
+local AimBtn = createBtn("AUTO AIM: OFF", Color3.fromRGB(200, 0, 0))
+AimBtn.MouseButton1Click:Connect(function()
+    autoAim = not autoAim
+    AimBtn.Text = autoAim and "AUTO AIM: ON" or "AUTO AIM: OFF"
+    
+    task.spawn(function()
+        while autoAim do
+            local target = nil
+            local dist = math.huge
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+                    local mag = (game.Players.LocalPlayer.Character.Head.Position - v.Character.Head.Position).magnitude
+                    if mag < dist then
+                        dist = mag
+                        target = v.Character.Head
+                    end
+                end
             end
+            if target then
+                game.Workspace.CurrentCamera.CFrame = CFrame.new(game.Workspace.CurrentCamera.CFrame.Position, target.Position)
+            end
+            task.wait()
         end
-        task.wait(2)
-    end
+    end)
 end)
 
--- Auto Parry (KEMBALI)
-local ParryBtn = createBtn("AUTO PARRY: OFF", Color3.fromRGB(255, 165, 0))
-ParryBtn.MouseButton1Click:Connect(function()
-    autoParry = not autoParry
-    ParryBtn.Text = autoParry and "AUTO PARRY: ON" or "AUTO PARRY: OFF"
-end)
-
--- Auto Click
-local ClickBtn = createBtn("AUTO CLICK: OFF", Color3.fromRGB(0, 150, 255))
-ClickBtn.MouseButton1Click:Connect(function()
-    clicking = not clicking
-    ClickBtn.Text = clicking and "AUTO CLICK: ON" or "AUTO CLICK: OFF"
-    while clicking do
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        task.wait(0.1)
+-- ==========================================
+-- 2. GENERATOR ESP
+-- ==========================================
+local GenESPBtn = createBtn("GENERATOR ESP", Color3.fromRGB(0, 150, 0))
+GenESPBtn.MouseButton1Click:Connect(function()
+    for _, v in pairs(game.Workspace:GetDescendants()) do
+        if v.Name:lower():find("generator") and v:IsA("BasePart") then
+            local h = Instance.new("Highlight", v)
+            h.FillColor = Color3.fromRGB(0, 255, 0)
+            local b = Instance.new("BillboardGui", v)
+            b.Size = UDim2.new(0, 100, 0, 50)
+            b.AlwaysOnTop = true
+            local t = Instance.new("TextLabel", b)
+            t.Size = UDim2.new(1, 0, 1, 0)
+            t.Text = "GENERATOR"
+            t.TextColor3 = Color3.fromRGB(0, 255, 0)
+            t.BackgroundTransparency = 1
+        end
     end
 end)
 
 -- ==========================================
--- LOGIKA MINIMIZE
+-- 3. AUTO REPAIR GENERATOR
 -- ==========================================
-MinimizeBtn.Parent = Frame
-MinimizeBtn.Position = UDim2.new(0, 10, 0, 275)
-MinimizeBtn.Size = UDim2.new(0, 200, 0, 35)
-MinimizeBtn.Text = "Sembunyikan Menu"
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-
-MinimizeBtn.MouseButton1Click:Connect(function()
-    Frame.Visible = false
-    OpenBtn.Visible = true
+local RepairBtn = createBtn("AUTO REPAIR: OFF", Color3.fromRGB(0, 100, 255))
+RepairBtn.MouseButton1Click:Connect(function()
+    autoRepair = not autoRepair
+    RepairBtn.Text = autoRepair and "AUTO REPAIR: ON" or "AUTO REPAIR: OFF"
+    
+    task.spawn(function()
+        while autoRepair do
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                if v.Name:lower():find("generator") and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).magnitude < 15 then
+                    -- Simulasi menekan tombol E atau Trigger Repair
+                    fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt"))
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
 end)
 
-OpenBtn.MouseButton1Click:Connect(function()
-    Frame.Visible = true
-    OpenBtn.Visible = false
-end)
+-- ==========================================
+-- FITUR LAIN (Speed, dsb)
+-- ==========================================
+local SpeedBtn = createBtn("SPEED (+10)", Color3.fromRGB(40, 40, 40))
+SpeedBtn.MouseButton1Click:Connect
