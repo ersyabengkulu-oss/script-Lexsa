@@ -1,4 +1,4 @@
--- LEXSA MENU V22: VIOLENCE DISTRICT EXCLUSIVE
+-- LEXSA MENU V23: ULTIMATE VIOLENCE DISTRICT
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -8,7 +8,7 @@ local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
 -- Setup UI
-ScreenGui.Name = "LexsaV22"
+ScreenGui.Name = "LexsaV23"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -29,7 +29,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA: VIOLENCE DIST"
+TextLabel.Text = "LEXSA V23: ULTIMATE"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -61,40 +61,99 @@ local function addToggle(name, color, func)
 end
 
 -- ==========================================
--- 1. GOD MODE (STABLE)
+-- 1. SPEED BOOST (KECEPATAN DISESUAIKAN)
 -- ==========================================
-addToggle("GOD MODE", Color3.fromRGB(60, 60, 60), function(state)
-    _G.God = state
+addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
+    _G.Spd = state
     task.spawn(function()
-        while _G.God do
-            pcall(function()
-                game.Players.LocalPlayer.Character.Humanoid.Health = 100
-                if game.Players.LocalPlayer.Character.Humanoid.Health < 100 then
-                    game.Players.LocalPlayer.Character.Humanoid.Health = 100
-                end
+        while _G.Spd do
+            pcall(function() 
+                -- Kecepatan dibuat 45 agar lebih stabil dan tidak terlalu cepat
+                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 45 
             end)
             task.wait(0.1)
+        end
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
+    end)
+end)
+
+-- ==========================================
+-- 2. ESP PLAYER & GEN (LIHAT MUSUH & GEN)
+-- ==========================================
+addToggle("ALL ESP", Color3.fromRGB(150, 0, 200), function(state)
+    _G.Esp = state
+    task.spawn(function()
+        while _G.Esp do
+            pcall(function()
+                -- ESP Player (Merah)
+                for _, p in pairs(game.Players:GetPlayers()) do
+                    if p ~= game.Players.LocalPlayer and p.Character then
+                        if not p.Character:FindFirstChild("Highlight") then
+                            local h = Instance.new("Highlight", p.Character)
+                            h.FillColor = Color3.fromRGB(255, 0, 0)
+                        end
+                    end
+                end
+                -- ESP Generator (Hijau)
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    if (v.Name:find("Generator") or v.Name:find("Gen")) and v:IsA("BasePart") then
+                        if not v:FindFirstChild("Highlight") then
+                            local h = Instance.new("Highlight", v)
+                            h.FillColor = Color3.fromRGB(0, 255, 0)
+                        end
+                    end
+                end
+            end)
+            task.wait(1)
+        end
+        -- Hapus ESP saat OFF
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if v:FindFirstChild("Highlight") then v.Highlight:Destroy() end
+        end
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Highlight") then p.Character.Highlight:Destroy() end
         end
     end)
 end)
 
 -- ==========================================
--- 2. AUTO GENERATOR (FIXED)
+-- 3. AUTO AIM (LOCK SAAT AKTIF)
+-- ==========================================
+addToggle("AUTO AIM", Color3.fromRGB(200, 0, 0), function(state)
+    _G.Aim = state
+    task.spawn(function()
+        local cam = game.Workspace.CurrentCamera
+        while _G.Aim do
+            pcall(function()
+                local closest = nil
+                local shortestDist = math.huge
+                for _, p in pairs(game.Players:GetPlayers()) do
+                    if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                        local pos = cam:WorldToViewportPoint(p.Character.Head.Position)
+                        local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
+                        if dist < shortestDist then
+                            closest = p.Character.Head
+                            shortestDist = dist
+                        end
+                    end
+                end
+                if closest then cam.CFrame = CFrame.new(cam.CFrame.Position, closest.Position) end
+            end)
+            task.wait()
+        end
+    end)
+end)
+
+-- ==========================================
+-- 4. AUTO GEN REPAIR
 -- ==========================================
 addToggle("AUTO GEN", Color3.fromRGB(0, 100, 200), function(state)
-    _G.Gen = state
+    _G.AutoRepair = state
     task.spawn(function()
-        while _G.Gen do
+        while _G.AutoRepair do
             pcall(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    -- Mencari objek dengan nama Generator atau Gen
-                    if (v.Name:find("Generator") or v.Name:find("Gen")) and v:IsA("BasePart") then
-                        -- ESP Hijau
-                        if not v:FindFirstChild("Highlight") then
-                            local h = Instance.new("Highlight", v)
-                            h.FillColor = Color3.fromRGB(0, 255, 0)
-                        end
-                        -- Auto Repair jika dekat
+                    if (v.Name:find("Generator") or v.Name:find("Gen")) then
                         local prompt = v:FindFirstChildOfClass("ProximityPrompt") or v:FindFirstChild("Prompt", true)
                         if prompt and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude < 12 then
                             fireproximityprompt(prompt)
@@ -108,7 +167,7 @@ addToggle("AUTO GEN", Color3.fromRGB(0, 100, 200), function(state)
 end)
 
 -- ==========================================
--- 3. AUTO PARRY (VIRTUAL F - NO EMOTE)
+-- 5. AUTO PARRY & GOD MODE
 -- ==========================================
 addToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
     _G.Parry = state
@@ -117,9 +176,7 @@ addToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
             pcall(function()
                 for _, p in pairs(game.Players:GetPlayers()) do
                     if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                        if dist < 10 then
-                            -- Hanya menekan F sebentar agar tidak memicu menu emot
+                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude < 10 then
                             game:GetService("VirtualInputManager"):SendKeyEvent(true, "F", false, game)
                             task.wait(0.02)
                             game:GetService("VirtualInputManager"):SendKeyEvent(false, "F", false, game)
@@ -132,22 +189,10 @@ addToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
     end)
 end)
 
--- ==========================================
--- 4. SPEED & AUTO CLICK
--- ==========================================
-addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
-    _G.Spd = state
-    while _G.Spd do
-        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 55 end)
-        task.wait(0.5)
-    end
-end)
-
-addToggle("AUTO CLICK", Color3.fromRGB(0, 150, 255), function(state)
-    _G.AC = state
-    while _G.AC do
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+addToggle("GOD MODE", Color3.fromRGB(60, 60, 60), function(state)
+    _G.God = state
+    while _G.God do
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.Health = 100 end)
         task.wait(0.1)
     end
 end)
