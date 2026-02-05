@@ -1,27 +1,32 @@
--- LEXSA V8.2: AUTO-CLAIM FISH [2026-02-06]
+-- LEXSA V8.3: MODULE BYPASS [2026-02-06]
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
-    CatchBtn.Text = catching and "AUTO-CLAIM: ON" or "AUTO-CLAIM: OFF"
+    CatchBtn.Text = catching and "BYPASS: ON" or "BYPASS: OFF"
     
     task.spawn(function()
+        -- Mencari jalur Net secara dinamis sesuai hasil SimpleSpy kamu
         local Net = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net
         
         while catching do
             pcall(function()
-                -- 1. Lempar Kail
+                -- Step 1: Simulasi Melempar Kail (Charge)
                 Net["RF/ChargeFishingRod"]:InvokeServer(100)
-                task.wait(0.1) -- Mengikuti jeda Vora Hub
+                task.wait(0.2) 
                 
-                -- 2. Tangkap Ikan
+                -- Step 2: Trigger Game Start (PENTING!)
+                Net["RF/RequestFishingMinigame"]:InvokeServer()
+                task.wait(0.2)
+                
+                -- Step 3: Selesaikan Pancingan dengan Argument "Fish"
                 Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
                 
-                -- 3. KLAIM HADIAH (Ini yang baru kamu temukan!)
+                -- Step 4: Klaim Hadiah
                 Net["RE/ClaimNotification"]:FireServer("Fish")
                 
-                print("LEXSA: Ikan diklaim ke tas!")
+                print("LEXSA: Remote Sequence Sent!")
             end)
-            task.wait(0.4) -- Delay Reel agar tidak lag
+            task.wait(0.5) -- Delay mengikuti Vora Hub
         end
     end)
 end)
