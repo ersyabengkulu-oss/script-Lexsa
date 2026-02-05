@@ -1,4 +1,4 @@
--- LEXSA MENU V28: ULTRA FAST TAME & AUTO COLLECT
+-- LEXSA MENU V29: CATCH & TAME (DELTA MOBILE FIX)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,15 +7,15 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
--- Setup UI
-ScreenGui.Name = "LexsaV28"
+-- Setup UI Utama agar mirip versi sebelumnya
+ScreenGui.Name = "LexsaV29"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
 OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 150)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
 OpenBtn.Text = "LEX"
 OpenBtn.Visible = false
 OpenBtn.Draggable = true
@@ -29,9 +29,9 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA: ULTRA TAME"
+TextLabel.Text = "LEXSA: C&T DELTA"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+TextLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
 
 ScrollFrame.Parent = Frame
 ScrollFrame.Size = UDim2.new(1, -10, 1, -90)
@@ -55,51 +55,80 @@ local function addToggle(name, color, func)
     btn.MouseButton1Click:Connect(function()
         active = not active
         btn.Text = active and name .. ": ON" or name .. ": OFF"
-        btn.BackgroundColor3 = active and Color3.fromRGB(0, 255, 100) or color
+        btn.BackgroundColor3 = active and Color3.fromRGB(0, 200, 0) or color
         func(active)
     end)
 end
 
 -- ==========================================
--- 1. ULTRA TAME (AUTO TELEPORT + AUTO CATCH)
+-- 1. AUTO FARM & TAME (DELTA FIX)
 -- ==========================================
-addToggle("ULTRA TAME", Color3.fromRGB(0, 120, 200), function(state)
-    _G.UltraTame = state
+addToggle("AUTO FARM TAME", Color3.fromRGB(255, 0, 100), function(state)
+    _G.Farm = state
     task.spawn(function()
-        while _G.UltraTame do
+        while _G.Farm do
             pcall(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    -- Mencari Monster
+                    -- Mencari hewan/monster di map
                     if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
-                        local root = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
-                        if root then
-                            -- Teleport ke monster
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(0, 0, 3)
+                        local hrp = v:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            -- Teleport ke lokasi hewan
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
                             
-                            -- Spam Klik & Tombol E (Tombol umum buat Tangkap/Tame)
-                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                            task.wait(0.05)
-                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            -- Menekan tombol Klik dan tombol E secara virtual
+                            local vim = game:GetService("VirtualInputManager")
+                            vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                            vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.1)
+                            vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                            vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                         end
                     end
                 end
             end)
-            task.wait(0.1)
+            task.wait(0.5)
         end
     end)
 end)
 
 -- ==========================================
--- 2. AUTO COLLECT DROPS (AMBIL ITEM JATUH)
+-- 2. ESP HEWAN (RARE/NORMAL)
 -- ==========================================
-addToggle("AUTO COLLECT", Color3.fromRGB(200, 150, 0), function(state)
-    _G.Collect = state
+addToggle("HEWAN ESP", Color3.fromRGB(150, 0, 255), function(state)
+    _G.Esp = state
     task.spawn(function()
-        while _G.Collect do
-            pcall(function()
-                for _, v in pairs(game.Workspace:GetDescendants()) do
-                    -- Mencari item yang bisa diambil (biasanya ada ProximityPrompt)
-                    if v:IsA("ProximityPrompt") then
-                        local dist = (game.Players.Local
+        while _G.Esp do
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
+                    if not v:FindFirstChild("Highlight") then
+                        local h = Instance.new("Highlight", v)
+                        h.FillColor = Color3.fromRGB(255, 255, 0)
+                    end
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end)
+
+-- ==========================================
+-- 3. SPEED BOOST (45 - STABIL)
+-- ==========================================
+addToggle("SPEED BOOST", Color3.fromRGB(50, 50, 50), function(state)
+    _G.Spd = state
+    while _G.Spd do
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 45 end)
+        task.wait(0.5)
+    end
+    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
+end)
+
+-- Tombol Sembunyikan
+MinimizeBtn.Parent = Frame
+MinimizeBtn.Size = UDim2.new(1, -20, 0, 35)
+MinimizeBtn.Position = UDim2.new(0, 10, 1, -40)
+MinimizeBtn.Text = "Sembunyikan Menu"
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+MinimizeBtn.MouseButton1Click:Connect(function() Frame.Visible = false OpenBtn.Visible = true end)
+OpenBtn.MouseButton1Click:Connect(function() Frame.Visible = true OpenBtn.Visible = false end)
