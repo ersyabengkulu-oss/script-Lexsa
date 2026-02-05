@@ -1,26 +1,28 @@
--- LEXSA V7.7: SUCCESS MIRROR
+-- LEXSA V7.9: DIRECT PATH FIX
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
-    CatchBtn.Text = catching and "MIRROR: ON" or "MIRROR: OFF"
-    CatchBtn.BackgroundColor3 = catching and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(50, 50, 50)
+    CatchBtn.Text = catching and "STRICT: ON" or "STRICT: OFF"
     
     task.spawn(function()
-        -- Jalur Rahasia yang kamu temukan lewat SimpleSpy
-        local NetPath = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net
-        local CatchRemote = NetPath["RF/CatchFishCompleted"]
-        local CastRemote = NetPath["RF/ChargeFishingRod"]
+        -- Kita pakai cara mencari (Find) agar tidak error jika folder tidak ketemu
+        local RS = game:GetService("ReplicatedStorage")
+        local Net = RS:WaitForChild("Packages"):WaitForChild("_Index"):FindFirstChild("sleitnick_net@0.2.0", true):WaitForChild("net")
+        
+        local RemoteCast = Net:FindFirstChild("RF/ChargeFishingRod")
+        local RemoteCatch = Net:FindFirstChild("RF/CatchFishCompleted")
         
         while catching do
             pcall(function()
-                -- Step 1: Lempar (Power 100)
-                CastRemote:InvokeServer(100)
-                task.wait(0.1) -- Delay Bait sesuai Vora
+                -- Step 1: Paksa Lempar (Power 100)
+                RemoteCast:InvokeServer(100)
+                task.wait(0.1) -- Delay Bait Vora
                 
-                -- Step 2: Langsung Klaim (Tanpa Args sesuai hasil spy kamu)
-                CatchRemote:InvokeServer()
-                task.wait(0.4) -- Delay Reel sesuai Vora
+                -- Step 2: Paksa Menang
+                RemoteCatch:InvokeServer()
+                print("Remote Terkirim!") -- Cek di F9 apakah tulisan ini muncul
             end)
+            task.wait(0.4) -- Delay Reel Vora
         end
     end)
 end)
