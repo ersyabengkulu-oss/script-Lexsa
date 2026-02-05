@@ -1,4 +1,4 @@
--- LEXSA MENU V19: VIOLENCE DISTRICT SPECIAL
+-- LEXSA MENU V20: GENERATOR FIX & GOD MODE
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,11 +7,12 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
--- Setup UI
-ScreenGui.Name = "LexsaV19"
+-- Setup UI Utama
+ScreenGui.Name = "LexsaV20"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
+-- Tombol Buka (LEX)
 OpenBtn.Name = "OpenBtn"
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -22,6 +23,7 @@ OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenBtn.Visible = false
 OpenBtn.Draggable = true
 
+-- Frame Menu
 Frame.Name = "MainFrame"
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -32,7 +34,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA V19: PARRY+"
+TextLabel.Text = "LEXSA V20: GOD MODE"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -47,39 +49,104 @@ UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 5)
 
-local function addBtn(name, color, func)
-    local b = Instance.new("TextButton")
-    b.Parent = ScrollFrame
-    b.Size = UDim2.new(1, -10, 0, 40)
-    b.Text = name
-    b.BackgroundColor3 = color
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.SourceSansBold
-    b.MouseButton1Click:Connect(func)
-    return b
+-- Fungsi Helper Tombol ON/OFF
+local function createToggle(name, default_color, func)
+    local active = false
+    local btn = Instance.new("TextButton")
+    btn.Parent = ScrollFrame
+    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.Text = name .. ": OFF"
+    btn.BackgroundColor3 = default_color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = active and name .. ": ON" or name .. ": OFF"
+        btn.BackgroundColor3 = active and Color3.fromRGB(0, 180, 0) or default_color
+        func(active)
+    end)
+    return btn
 end
 
 -- ==========================================
--- FITUR AUTO PARRY (KHUSUS)
+-- 1. GOD MODE (KEBAL)
 -- ==========================================
-local parryActive = false
-local ParryBtn = addBtn("AUTO PARRY: OFF", Color3.fromRGB(255, 100, 0), function() end)
-
-ParryBtn.MouseButton1Click:Connect(function()
-    parryActive = not parryActive
-    ParryBtn.Text = parryActive and "AUTO PARRY: ON" or "AUTO PARRY: OFF"
-    ParryBtn.BackgroundColor3 = parryActive and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(255, 100, 0)
-    
+createToggle("GOD MODE", Color3.fromRGB(80, 80, 80), function(state)
+    _G.GodMode = state
     task.spawn(function()
-        while parryActive do
+        while _G.GodMode do
             pcall(function()
-                for _, player in pairs(game.Players:GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        if distance < 15 then -- Jarak deteksi musuh
-                            -- Menjalankan aksi parry/block sesuai tombol game (biasanya F atau mouse kanan)
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid.MaxHealth = math.huge
+                    char.Humanoid.Health = math.huge
+                end
+            end)
+            task.wait(0.1)
+        end
+        -- Reset Health saat OFF
+        pcall(function() 
+            game.Players.LocalPlayer.Character.Humanoid.MaxHealth = 100 
+            game.Players.LocalPlayer.Character.Humanoid.Health = 100
+        end)
+    end)
+end)
+
+-- ==========================================
+-- 2. GENERATOR ESP & AUTO REPAIR (FIXED)
+-- ==========================================
+createToggle("GEN HELPER", Color3.fromRGB(0, 100, 200), function(state)
+    _G.GenHelper = state
+    if state then
+        -- Logika ESP Generator
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if (v.Name:lower():find("generator") or v.Name:lower():find("gen")) and v:IsA("BasePart") then
+                if not v:FindFirstChild("GenHighlight") then
+                    local h = Instance.new("Highlight", v)
+                    h.Name = "GenHighlight"
+                    h.FillColor = Color3.fromRGB(0, 255, 0)
+                end
+            end
+        end
+        -- Logika Auto Repair
+        task.spawn(function()
+            while _G.GenHelper do
+                pcall(function()
+                    for _, v in pairs(game.Workspace:GetDescendants()) do
+                        if (v.Name:lower():find("generator") or v.Name:lower():find("gen")) then
+                            local prompt = v:FindFirstChildOfClass("ProximityPrompt") or v:FindFirstChild("Prompt", true)
+                            if prompt and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude < 15 then
+                                fireproximityprompt(prompt)
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.3)
+            end
+        end)
+    else
+        -- Hapus ESP saat OFF
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if v:FindFirstChild("GenHighlight") then v.GenHighlight:Destroy() end
+        end
+    end
+end)
+
+-- ==========================================
+-- 3. FITUR LAINNYA
+-- ==========================================
+createToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
+    _G.Parry = state
+    task.spawn(function()
+        while _G.Parry do
+            pcall(function()
+                for _, p in pairs(game.Players:GetPlayers()) do
+                    if p ~= game.Players.LocalPlayer and p.Character then
+                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                        if dist < 12 then
                             game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game)
-                            task.wait(0.1)
+                            task.wait(0.05)
                             game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.F, false, game)
                         end
                     end
@@ -90,50 +157,12 @@ ParryBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- ==========================================
--- FITUR LAINNYA
--- ==========================================
-addBtn("SPEED (+50)", Color3.fromRGB(60, 60, 60), function()
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
-end)
-
-addBtn("ESP MUSUH", Color3.fromRGB(150, 0, 200), function()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer and p.Character then
-            if not p.Character:FindFirstChild("Highlight") then
-                Instance.new("Highlight", p.Character).FillColor = Color3.fromRGB(255, 0, 0)
-            end
-        end
-    end
-end)
-
-addBtn("AUTO AIM", Color3.fromRGB(200, 0, 0), function()
-    _G.AA = not _G.AA
-    while _G.AA do
-        task.wait()
-        pcall(function()
-            local cam = game.Workspace.CurrentCamera
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                    cam.CFrame = CFrame.new(cam.CFrame.Position, v.Character.Head.Position)
-                end
-            end
-        end)
-    end
-end)
-
-addBtn("GEN ESP & REPAIR", Color3.fromRGB(0, 100, 200), function()
-    for _, v in pairs(game.Workspace:GetDescendants()) do
-        if v.Name:lower():find("generator") and v:IsA("BasePart") then
-            if not v:FindFirstChild("Highlight") then Instance.new("Highlight", v).FillColor = Color3.fromRGB(0, 255, 0) end
-            task.spawn(function()
-                while task.wait(0.5) do
-                    if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).magnitude < 15 then
-                        fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt"))
-                    end
-                end
-            end)
-        end
+createToggle("AUTO CLICK", Color3.fromRGB(0, 150, 255), function(state)
+    _G.Clicker = state
+    while _G.Clicker do
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        task.wait(0.1)
     end
 end)
 
