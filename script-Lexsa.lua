@@ -15,7 +15,7 @@ local autoParry = false
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false 
 
--- Tombol Buka (LEX)
+-- 1. Tombol Buka (LEX) - Tetap Ada di Layar
 OpenBtn.Parent = ScreenGui
 OpenBtn.Name = "OpenButton"
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -26,7 +26,7 @@ OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenBtn.Visible = false 
 OpenBtn.Draggable = true
 
--- Menu Utama
+-- 2. Menu Utama
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Frame.Position = UDim2.new(0.3, 0, 0.2, 0)
@@ -63,7 +63,7 @@ local function createBtn(txt, color)
 end
 
 -- ==========================================
--- 1. FITUR SPEED (BYPASS)
+-- FITUR-FITUR UTAMA
 -- ==========================================
 local SpeedShow = createBtn("SPEED: " .. walkSpeed, Color3.fromRGB(40, 40, 40))
 local AddSpeed = createBtn("TAMBAH SPEED (+10)", Color3.fromRGB(0, 120, 0))
@@ -81,13 +81,7 @@ end
 AddSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed + 10) end)
 SubSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed - 10) end)
 
-task.spawn(function()
-    while task.wait(0.5) do setSpeed(walkSpeed) end
-end)
-
--- ==========================================
--- 2. FITUR ESP (LIHAT MUSUH)
--- ==========================================
+-- ESP Feature
 local ESPBtn = createBtn("ESP (LIHAT MUSUH)", Color3.fromRGB(150, 0, 255))
 ESPBtn.MouseButton1Click:Connect(function()
     espActive = not espActive
@@ -104,19 +98,14 @@ ESPBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ==========================================
--- 3. FITUR AUTO PARRY (KEMBALI!)
--- ==========================================
+-- Auto Parry (KEMBALI)
 local ParryBtn = createBtn("AUTO PARRY: OFF", Color3.fromRGB(255, 165, 0))
 ParryBtn.MouseButton1Click:Connect(function()
     autoParry = not autoParry
     ParryBtn.Text = autoParry and "AUTO PARRY: ON" or "AUTO PARRY: OFF"
-    -- Logika Auto Parry menyesuaikan game
 end)
 
--- ==========================================
--- 4. FITUR AUTO CLICK
--- ==========================================
+-- Auto Click
 local ClickBtn = createBtn("AUTO CLICK: OFF", Color3.fromRGB(0, 150, 255))
 ClickBtn.MouseButton1Click:Connect(function()
     clicking = not clicking
@@ -126,19 +115,6 @@ ClickBtn.MouseButton1Click:Connect(function()
         game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
         task.wait(0.1)
     end
-end)
-
--- ==========================================
--- 5. FITUR GOD MODE
--- ==========================================
-local GodBtn = createBtn("GOD MODE: OFF", Color3.fromRGB(255, 255, 255))
-GodBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-local godActive = false
-GodBtn.MouseButton1Click:Connect(function()
-    godActive = not godActive
-    GodBtn.Text = godActive and "GOD MODE: ON" or "GOD MODE: OFF"
-    game.Players.LocalPlayer.Character.Humanoid.MaxHealth = godActive and math.huge or 100
-    game.Players.LocalPlayer.Character.Humanoid.Health = godActive and math.huge or 100
 end)
 
 -- ==========================================
