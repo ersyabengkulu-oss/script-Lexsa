@@ -2,28 +2,25 @@ local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
 local SpeedBtn = Instance.new("TextButton")
-local JumpBtn = Instance.new("TextButton")
-local InfJumpBtn = Instance.new("TextButton")
-local InvisBtn = Instance.new("TextButton")
 local ESPBtn = Instance.new("TextButton")
-local TPBtn = Instance.new("TextButton")
+local AutoClickBtn = Instance.new("TextButton")
 local CloseBtn = Instance.new("TextButton")
 
+-- Setting Menu Utama
 ScreenGui.Parent = game.CoreGui
 Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Frame.Position = UDim2.new(0.3, 0, 0.2, 0)
-Frame.Size = UDim2.new(0, 220, 0, 410) -- Ukuran diperbesar untuk fitur baru
+Frame.Size = UDim2.new(0, 220, 0, 310)
 Frame.Active = true
 Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(0, 220, 0, 50)
-TextLabel.Text = "LEXSA MENU V5 (PRO)"
+TextLabel.Text = "LEXSA V6: VIOLENCE DISTRICT"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Warna merah darah sesuai tema game
 
--- Fungsi bantu untuk membuat tombol lebih cepat
 local function createBtn(btn, pos, txt, color)
     btn.Parent = Frame
     btn.Position = UDim2.new(0, 10, 0, pos)
@@ -33,24 +30,16 @@ local function createBtn(btn, pos, txt, color)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
-createBtn(SpeedBtn, 60, "Speed (100)")
-createBtn(JumpBtn, 110, "Jump (100)")
-createBtn(InfJumpBtn, 160, "Infinite Jump")
-createBtn(InvisBtn, 210, "Invisible (Ghaib)", Color3.fromRGB(0, 150, 255))
-createBtn(ESPBtn, 260, "ESP (Lihat Musuh)", Color3.fromRGB(150, 0, 255))
-createBtn(TPBtn, 310, "Teleport ke Pemain", Color3.fromRGB(0, 200, 100))
-createBtn(CloseBtn, 360, "Tutup Menu", Color3.fromRGB(200, 0, 0))
+createBtn(SpeedBtn, 60, "Fast Walk (50)")
+createBtn(ESPBtn, 110, "Lihat Musuh (ESP)", Color3.fromRGB(150, 0, 255))
+createBtn(AutoClickBtn, 160, "Auto Click/Punch", Color3.fromRGB(0, 150, 255))
+createBtn(CloseBtn, 210, "Tutup Menu", Color3.fromRGB(200, 0, 0))
 
 -- LOGIKA FITUR
-SpeedBtn.MouseButton1Click:Connect(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100 end)
-JumpBtn.MouseButton1Click:Connect(function() game.Players.LocalPlayer.Character.Humanoid.JumpPower = 100 end)
-InfJumpBtn.MouseButton1Click:Connect(function()
-    game:GetService("UserInputService").JumpRequest:Connect(function()
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end)
+SpeedBtn.MouseButton1Click:Connect(function()
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
 end)
 
--- Fitur ESP (Lihat Musuh)
 ESPBtn.MouseButton1Click:Connect(function()
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= game.Players.LocalPlayer and player.Character then
@@ -61,12 +50,20 @@ ESPBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Fitur Teleport (Ke pemain random)
-TPBtn.MouseButton1Click:Connect(function()
-    local players = game.Players:GetPlayers()
-    local randomPlayer = players[math.random(1, #players)]
-    if randomPlayer ~= game.Players.LocalPlayer and randomPlayer.Character then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame
+-- Fitur Auto Click (Sangat berguna di Violence District)
+local clicking = false
+AutoClickBtn.MouseButton1Click:Connect(function()
+    clicking = not clicking
+    if clicking then
+        AutoClickBtn.Text = "Auto Click: ON"
+        while clicking do
+            local vim = game:GetService("VirtualInputManager")
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            wait(0.1) -- Kecepatan klik
+        end
+    else
+        AutoClickBtn.Text = "Auto Click: OFF"
     end
 end)
 
