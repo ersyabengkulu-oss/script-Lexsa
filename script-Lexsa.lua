@@ -1,34 +1,26 @@
--- V5.4: REMOTE SNIPER FIX
-addToggle("AUTO BASE UPGRADE", Color3.fromRGB(0, 200, 100), function(state)
-    _G.AutoBase = state
+-- V5.5: THE GHOST WALKER (TELEPORT AUTO-BUY)
+addToggle("AUTO BASE UPGRADE", Color3.fromRGB(200, 0, 0), function(state)
+    _G.GhostWalk = state
     task.spawn(function()
-        while _G.AutoBase do
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        
+        while _G.GhostWalk do
             pcall(function()
-                -- 1. Ambil Uang (Coba semua metode: Touch & Remote)
+                -- Cari semua tombol di sekitar base
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if v.Name == "Collect" or v.Name:find("Giver") then
-                        if v:IsA("TouchTransmitter") then
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v.Parent, 0)
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v.Parent, 1)
-                        end
-                        -- Coba tembak remote jika ada
-                        local remote = v.Parent:FindFirstChildOfClass("RemoteEvent")
-                        if remote then remote:FireServer() end
-                    end
-                end
-
-                -- 2. Upgrade (Cari folder 'Buttons' atau 'Purchases')
-                local tycoon = game.Workspace:FindFirstChild("Tycoons") or game.Workspace:FindFirstChild("Bases")
-                if tycoon then
-                    for _, btn in pairs(tycoon:GetDescendants()) do
-                        if btn.Name == "Button" or btn:FindFirstChild("Price") then
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, btn, 0)
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, btn, 1)
+                    if v:IsA("BasePart") and v.Transparency ~= 1 then
+                        if v.Name:find("Buy") or v.Name:find("Upgrade") or v.Name == "Collect" then
+                            -- Teleport sekejap ke tombol buat "paksa" sentuhan
+                            local oldPos = hrp.CFrame
+                            hrp.CFrame = v.CFrame
+                            task.wait(0.05) -- Berkedip 0.05 detik
+                            hrp.CFrame = oldPos
                         end
                     end
                 end
             end)
-            task.wait(0.3)
+            task.wait(1)
         end
     end)
 end)
