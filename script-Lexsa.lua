@@ -85,7 +85,6 @@ createToggle("GOD MODE", Color3.fromRGB(80, 80, 80), function(state)
             end)
             task.wait(0.1)
         end
-        -- Reset Health saat OFF
         pcall(function() 
             game.Players.LocalPlayer.Character.Humanoid.MaxHealth = 100 
             game.Players.LocalPlayer.Character.Humanoid.Health = 100
@@ -99,7 +98,6 @@ end)
 createToggle("GEN HELPER", Color3.fromRGB(0, 100, 200), function(state)
     _G.GenHelper = state
     if state then
-        -- Logika ESP Generator
         for _, v in pairs(game.Workspace:GetDescendants()) do
             if (v.Name:lower():find("generator") or v.Name:lower():find("gen")) and v:IsA("BasePart") then
                 if not v:FindFirstChild("GenHighlight") then
@@ -109,7 +107,6 @@ createToggle("GEN HELPER", Color3.fromRGB(0, 100, 200), function(state)
                 end
             end
         end
-        -- Logika Auto Repair
         task.spawn(function()
             while _G.GenHelper do
                 pcall(function()
@@ -126,7 +123,6 @@ createToggle("GEN HELPER", Color3.fromRGB(0, 100, 200), function(state)
             end
         end)
     else
-        -- Hapus ESP saat OFF
         for _, v in pairs(game.Workspace:GetDescendants()) do
             if v:FindFirstChild("GenHighlight") then v.GenHighlight:Destroy() end
         end
@@ -134,7 +130,7 @@ createToggle("GEN HELPER", Color3.fromRGB(0, 100, 200), function(state)
 end)
 
 -- ==========================================
--- 3. FITUR LAINNYA
+-- 3. AUTO PARRY
 -- ==========================================
 createToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
     _G.Parry = state
@@ -157,6 +153,9 @@ createToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
     end)
 end)
 
+-- ==========================================
+-- 4. AUTO CLICK
+-- ==========================================
 createToggle("AUTO CLICK", Color3.fromRGB(0, 150, 255), function(state)
     _G.Clicker = state
     while _G.Clicker do
