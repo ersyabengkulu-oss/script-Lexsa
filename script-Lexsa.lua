@@ -1,4 +1,4 @@
--- LEXSA MENU V25: GEN FIX & ANTI-EMOTE PARRY
+-- LEXSA MENU V26: CATCH & TAME SPECIAL
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -8,14 +8,14 @@ local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
 -- Setup UI
-ScreenGui.Name = "LexsaV25"
+ScreenGui.Name = "LexsaV26"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
 OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
 OpenBtn.Text = "LEX"
 OpenBtn.Visible = false
 OpenBtn.Draggable = true
@@ -29,9 +29,9 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA V25: FIXED"
+TextLabel.Text = "LEXSA: CATCH & TAME"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+TextLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
 
 ScrollFrame.Parent = Frame
 ScrollFrame.Size = UDim2.new(1, -10, 1, -90)
@@ -61,108 +61,65 @@ local function addToggle(name, color, func)
 end
 
 -- ==========================================
--- 1. AUTO GEN (SISTEM SCAN LEBIH KUAT)
+-- 1. MONSTER ESP (MELIHAT MONSTER DARI JAUH)
 -- ==========================================
-addToggle("AUTO GEN", Color3.fromRGB(0, 100, 200), function(state)
-    _G.AutoRepair = state
+addToggle("MONSTER ESP", Color3.fromRGB(150, 0, 200), function(state)
+    _G.MonsterEsp = state
     task.spawn(function()
-        while _G.AutoRepair do
+        while _G.MonsterEsp do
             pcall(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    -- Mencari segala jenis objek Generator
-                    if v:IsA("Model") and (v.Name:find("Generator") or v.Name:find("Gen")) then
-                        local root = v:FindFirstChildWhichIsA("BasePart") or v.PrimaryPart
-                        if root then
-                            -- Tambahkan ESP Hijau agar terlihat
-                            if not root:FindFirstChild("Highlight") then
-                                local h = Instance.new("Highlight", root)
-                                h.FillColor = Color3.fromRGB(0, 255, 0)
-                            end
-                            -- Jarak deteksi diperluas ke 15 meter
-                            local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
-                            if dist < 15 then
-                                local prompt = v:FindFirstChildOfClass("ProximityPrompt") or v:FindFirstChild("Prompt", true)
-                                if prompt then fireproximityprompt(prompt) end
-                            end
+                    -- Mencari objek yang biasanya menjadi monster di game ini
+                    if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
+                        if not v:FindFirstChild("Highlight") then
+                            local h = Instance.new("Highlight", v)
+                            h.FillColor = Color3.fromRGB(255, 255, 0) -- Kuning untuk monster
                         end
                     end
                 end
             end)
-            task.wait(0.3)
+            task.wait(1)
         end
     end)
 end)
 
 -- ==========================================
--- 2. AUTO PARRY (ANTI-EMOTE & LEBIH CEPAT)
+-- 2. AUTO ATTACK / CLICK
 -- ==========================================
-addToggle("AUTO PARRY", Color3.fromRGB(255, 100, 0), function(state)
-    _G.Parry = state
-    task.spawn(function()
-        while _G.Parry do
-            pcall(function()
-                for _, p in pairs(game.Players:GetPlayers()) do
-                    if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                        -- Deteksi jarak musuh menyerang
-                        if dist < 11 then
-                            -- Menggunakan sistem KeyPress kilat agar menu emot tidak terbuka
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game)
-                            task.wait(0.01) -- Sangat cepat
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.F, false, game)
-                        end
-                    end
-                end
-            end)
-            task.wait(0.05)
-        end
-    end)
+addToggle("AUTO ATTACK", Color3.fromRGB(200, 0, 0), function(state)
+    _G.AutoAtk = state
+    while _G.AutoAtk do
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        task.wait(0.1)
+    end
 end)
 
 -- ==========================================
--- 3. FITUR LAINNYA (OPTIMIZED)
+-- 3. SPEED BOOST (STABIL)
 -- ==========================================
-addToggle("SMOOTH AIM", Color3.fromRGB(200, 0, 0), function(state)
-    _G.Aim = state
-    local cam = game.Workspace.CurrentCamera
-    task.spawn(function()
-        while _G.Aim do
-            pcall(function()
-                local target = nil
-                local dist = 150
-                for _, p in pairs(game.Players:GetPlayers()) do
-                    if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-                        local pos, vis = cam:WorldToViewportPoint(p.Character.Head.Position)
-                        if vis then
-                            local mDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
-                            if mDist < dist then target = p.Character.Head dist = mDist end
-                        end
-                    end
-                end
-                if target then cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.Position, target.Position), 0.1) end
-            end)
-            task.wait()
-        end
-    end)
-end)
-
 addToggle("SPEED BOOST", Color3.fromRGB(40, 40, 40), function(state)
     _G.Spd = state
     while _G.Spd do
-        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 45 end)
-        task.wait(0.1)
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50 end)
+        task.wait(0.2)
     end
+    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
 end)
 
-addToggle("GOD MODE", Color3.fromRGB(60, 60, 60), function(state)
-    _G.God = state
-    while _G.God do
-        pcall(function() game.Players.LocalPlayer.Character.Humanoid.Health = 100 end)
-        task.wait(0.1)
+-- ==========================================
+-- 4. INF STAMINA / JUMP
+-- ==========================================
+addToggle("HIGH JUMP", Color3.fromRGB(0, 150, 0), function(state)
+    _G.Jump = state
+    while _G.Jump do
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.JumpPower = 80 end)
+        task.wait(0.2)
     end
+    pcall(function() game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50 end)
 end)
 
--- Minimize
+-- Minimize System
 MinimizeBtn.Parent = Frame
 MinimizeBtn.Size = UDim2.new(1, -20, 0, 35)
 MinimizeBtn.Position = UDim2.new(0, 10, 1, -40)
