@@ -4,23 +4,32 @@ local TextLabel = Instance.new("TextLabel")
 local SpeedBtn = Instance.new("TextButton")
 local ESPBtn = Instance.new("TextButton")
 local AutoClickBtn = Instance.new("TextButton")
-local AutoParryBtn = Instance.new("TextButton") -- Tombol baru
+local AutoParryBtn = Instance.new("TextButton")
+local FullBrightBtn = Instance.new("TextButton") -- Tombol baru
 local CloseBtn = Instance.new("TextButton")
+local IconImage = Instance.new("ImageLabel") -- Icon Menu (baru)
 
 -- Setting Menu Utama
 ScreenGui.Parent = game.CoreGui
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Frame.Position = UDim2.new(0.3, 0, 0.2, 0)
-Frame.Size = UDim2.new(0, 220, 0, 360) -- Ukuran diperbesar
+Frame.Size = UDim2.new(0, 220, 0, 410) -- Ukuran diperbesar lagi
 Frame.Active = true
 Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(0, 220, 0, 50)
-TextLabel.Text = "LEXSA V7: ULTRA EDITION"
+TextLabel.Text = "LEXSA V8: CUSTOMIZE & VISION"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+
+-- Area untuk Icon Menu
+IconImage.Parent = Frame
+IconImage.BackgroundTransparency = 1
+IconImage.Position = UDim2.new(0.7, 0, 0, 0) -- Posisikan di pojok kanan atas menu
+IconImage.Size = UDim2.new(0, 50, 0, 50)
+IconImage.Image = "rbxassetid://13508127391" -- GANTI DENGAN ASSET ID GAMBAR ICON KAMU (Contoh: logo hacker)
 
 local function createBtn(btn, pos, txt, color)
     btn.Parent = Frame
@@ -34,8 +43,9 @@ end
 createBtn(SpeedBtn, 60, "Fast Walk (50)")
 createBtn(ESPBtn, 110, "Lihat Musuh (ESP)", Color3.fromRGB(150, 0, 255))
 createBtn(AutoClickBtn, 160, "Auto Click/Punch", Color3.fromRGB(0, 150, 255))
-createBtn(AutoParryBtn, 210, "Auto Parry: OFF", Color3.fromRGB(255, 165, 0)) -- Warna Orange
-createBtn(CloseBtn, 260, "Tutup Menu", Color3.fromRGB(200, 0, 0))
+createBtn(AutoParryBtn, 210, "Auto Parry: OFF", Color3.fromRGB(255, 165, 0))
+createBtn(FullBrightBtn, 260, "Full Bright: OFF", Color3.fromRGB(255, 255, 0)) -- Warna Kuning
+createBtn(CloseBtn, 360, "Tutup Menu", Color3.fromRGB(200, 0, 0))
 
 -- LOGIKA FITUR
 SpeedBtn.MouseButton1Click:Connect(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50 end)
@@ -62,19 +72,16 @@ AutoClickBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Fitur Auto Parry (Menangkis Otomatis)
+-- Fitur Auto Parry
 local parryActive = false
 AutoParryBtn.MouseButton1Click:Connect(function()
     parryActive = not parryActive
     AutoParryBtn.Text = parryActive and "Auto Parry: ON" or "Auto Parry: OFF"
-    
-    -- Logika sederhana: Jika musuh di dekatmu menyerang, tekan tombol tangkis
     while parryActive do
         for _, enemy in pairs(game.Players:GetPlayers()) do
             if enemy ~= game.Players.LocalPlayer and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
                 local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - enemy.Character.HumanoidRootPart.Position).Magnitude
-                if dist < 15 then -- Jika jarak musuh sangat dekat
-                    -- Menekan tombol "F" (biasanya tombol parry di banyak game)
+                if dist < 15 then
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game)
                     task.wait(0.05)
                     game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.F, false, game)
@@ -82,6 +89,23 @@ AutoParryBtn.MouseButton1Click:Connect(function()
             end
         end
         task.wait(0.1)
+    end
+end)
+
+-- Fitur Full Bright (Terang Benderang)
+local brightActive = false
+FullBrightBtn.MouseButton1Click:Connect(function()
+    brightActive = not brightActive
+    FullBrightBtn.Text = brightActive and "Full Bright: ON" or "Full Bright: OFF"
+    if brightActive then
+        game.Lighting.Brightness = 5 -- Membuat cahaya sangat terang
+        game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    else
+        -- Mengembalikan pengaturan cahaya default (ini mungkin berbeda tiap game)
+        game.Lighting.Brightness = 2 -- Default Roblox
+        game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
     end
 end)
 
