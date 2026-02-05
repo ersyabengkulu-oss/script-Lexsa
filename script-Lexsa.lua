@@ -1,4 +1,4 @@
--- LEXSA MENU V29: CATCH & TAME (FULL MENU)
+-- LEXSA MENU V30: CATCH & TAME (RARE CATCHER FIX)
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -7,8 +7,9 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
-ScreenGui.Name = "LexsaFull"
+ScreenGui.Name = "LexsaV30"
 ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
 
 OpenBtn.Parent = ScreenGui
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -27,7 +28,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(1, 0, 0, 40)
-TextLabel.Text = "LEXSA: FULL MENU"
+TextLabel.Text = "LEXSA V30: RARE FIX"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 180)
 
@@ -49,7 +50,6 @@ local function addToggle(name, color, func)
     btn.Text = name .. ": OFF"
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
     btn.MouseButton1Click:Connect(function()
         active = not active
         btn.Text = active and name .. ": ON" or name .. ": OFF"
@@ -58,31 +58,51 @@ local function addToggle(name, color, func)
     end)
 end
 
--- FITUR UTAMA
+-- ==========================================
+-- FIX: ULTRA FARM (TUNGGU SAMPAI TANGKAP)
+-- ==========================================
 addToggle("ULTRA FARM", Color3.fromRGB(255, 0, 100), function(state)
     _G.Farm = state
     task.spawn(function()
         while _G.Farm do
             pcall(function()
+                local target = nil
+                local dist = 1000
+                
+                -- Cari monster terdekat
                 for _, v in pairs(game.Workspace:GetDescendants()) do
                     if v:IsA("Model") and v:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(v) then
                         local hrp = v:FindFirstChild("HumanoidRootPart")
                         if hrp then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
-                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                            task.wait(0.1)
-                            game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            local d = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                            if d < dist then target = v dist = d end
                         end
                     end
                 end
+                
+                if target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                    -- Terus menempel sampai hewan tertangkap atau mati
+                    while _G.Farm and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 do
+                        local hrp = target:FindFirstChild("HumanoidRootPart")
+                        if not hrp then break end
+                        
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, 4)
+                        
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                        task.wait(0.05)
+                        vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                    end
+                end
             end)
-            task.wait(0.3)
+            task.wait(0.1)
         end
     end)
 end)
 
+-- FITUR LAINNYA
 addToggle("MONSTER ESP", Color3.fromRGB(150, 0, 255), function(state)
     _G.Esp = state
     task.spawn(function()
