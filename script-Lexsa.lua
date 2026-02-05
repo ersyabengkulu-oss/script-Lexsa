@@ -1,6 +1,6 @@
--- LEXSA V7.0: STABLE LAVA WALKING ONLY
+-- LEXSA V7.2: LAVA WALKING + HIDE FEATURE
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "LexsaStable"
+ScreenGui.Name = "LexsaCompact"
 ScreenGui.Parent = game:GetService("CoreGui")
 
 local Frame = Instance.new("Frame")
@@ -12,11 +12,30 @@ Frame.Draggable = true
 Frame.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Size = UDim2.new(0.8, 0, 0, 30)
 Title.Text = "LEXSA LAVA CORE"
 Title.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Parent = Frame
+
+-- TOMBOL SEMBUNYIKAN (HIDE)
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0.2, 0, 0, 30)
+HideBtn.Position = UDim2.new(0.8, 0, 0, 0)
+HideBtn.Text = "_"
+HideBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideBtn.Parent = Frame
+
+-- TOMBOL BUKA KEMBALI (OPEN)
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Size = UDim2.new(0, 50, 0, 25)
+OpenBtn.Position = UDim2.new(0, 10, 0, 10)
+OpenBtn.Text = "LEXSA"
+OpenBtn.Visible = false
+OpenBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Parent = ScreenGui
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0.9, 0, 0, 45)
@@ -25,6 +44,17 @@ ToggleBtn.Text = "LAVA WALKING: OFF"
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Parent = Frame
+
+-- LOGIKA HIDE/SHOW
+HideBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = false
+    OpenBtn.Visible = true
+end)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = true
+    OpenBtn.Visible = false
+end)
 
 local active = false
 ToggleBtn.MouseButton1Click:Connect(function()
@@ -42,7 +72,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
                     end
                 end
             end)
-            task.wait(1.5) -- Jeda biar gak lag
+            task.wait(1.5)
         end
     end)
 end)
