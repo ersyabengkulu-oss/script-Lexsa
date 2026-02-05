@@ -6,14 +6,14 @@ local UIListLayout = Instance.new("UIListLayout")
 local MinimizeBtn = Instance.new("TextButton")
 local OpenBtn = Instance.new("TextButton")
 
--- Variabel Kecepatan (Default 50)
-local walkSpeed = 50
+-- Variabel Global
+local walkSpeed = 16 -- Mulai dari speed normal
+local espActive = false
 
--- Setting Utama
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false 
 
--- Tombol Buka (LEX)
+-- Tombol LEX (Buka)
 OpenBtn.Parent = ScreenGui
 OpenBtn.Name = "OpenButton"
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
@@ -34,7 +34,7 @@ Frame.Draggable = true
 
 TextLabel.Parent = Frame
 TextLabel.Size = UDim2.new(0, 220, 0, 40)
-TextLabel.Text = "LEXSA V14: SPEED MASTER"
+TextLabel.Text = "LEXSA V14.1: BYPASS"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
@@ -61,46 +61,67 @@ local function createBtn(txt, color)
 end
 
 -- ==========================================
--- FITUR PENGATUR KECEPATAN (BARU)
+-- LOGIKA SPEED BYPASS
 -- ==========================================
-local SpeedShow = createBtn("KECEPATAN SAAT INI: " .. walkSpeed, Color3.fromRGB(40, 40, 40))
+local SpeedShow = createBtn("SPEED: " .. walkSpeed, Color3.fromRGB(40, 40, 40))
 local AddSpeed = createBtn("TAMBAH SPEED (+10)", Color3.fromRGB(0, 120, 0))
 local SubSpeed = createBtn("KURANG SPEED (-10)", Color3.fromRGB(120, 0, 0))
 
--- Fungsi untuk update kecepatan ke karakter
-local function updateSpeed()
-    SpeedShow.Text = "KECEPATAN SAAT INI: " .. walkSpeed
-    local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid.WalkSpeed = walkSpeed
+local function setSpeed(value)
+    walkSpeed = value
+    SpeedShow.Text = "SPEED: " .. walkSpeed
+    local lp = game.Players.LocalPlayer
+    if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+        lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = walkSpeed
     end
 end
 
-AddSpeed.MouseButton1Click:Connect(function()
-    walkSpeed = walkSpeed + 10
-    updateSpeed()
-end)
+AddSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed + 10) end)
+SubSpeed.MouseButton1Click:Connect(function() setSpeed(walkSpeed - 10) end)
 
-SubSpeed.MouseButton1Click:Connect(function()
-    if walkSpeed > 16 then -- Agar tidak lebih lambat dari jalan normal
-        walkSpeed = walkSpeed - 10
-        updateSpeed()
+-- Loop agar Speed tidak di-reset oleh game
+task.spawn(function()
+    while task.wait(0.5) do
+        setSpeed(walkSpeed)
     end
 end)
 
--- Biar speed tetap nempel pas respawn
-game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
-    local hum = char:WaitForChild("Humanoid")
-    hum.WalkSpeed = walkSpeed
-end)
 -- ==========================================
+-- LOGIKA ESP BYPASS (Highlight System)
+-- ==========================================
+local ESPBtn = createBtn("ESP (LIHAT MUSUH)", Color3.fromRGB(150, 0, 255))
 
--- Fitur Lainnya
-local ESPBtn = createBtn("Lihat Musuh (ESP)", Color3.fromRGB(150, 0, 255))
-local AutoClickBtn = createBtn("Auto Click/Punch", Color3.fromRGB(0, 150, 255))
-local FlyBtn = createBtn("Fly (Terbang): OFF", Color3.fromRGB(255, 0, 150))
+local function applyESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            if not player.Character:FindFirstChild("LexsaESP") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "LexsaESP"
+                highlight.Parent = player.Character
+                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            end
+        end
+    end
+end
 
--- Logika Minimize
+ESPBtn.MouseButton1Click:Connect(function()
+    espActive = not espActive
+    ESPBtn.Text = espActive and "ESP: AKTIF" or "ESP: NONAKTIF"
+    if espActive then
+        applyESP()
+    else
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("LexsaESP") then
+                player.Character.LexsaESP:Destroy()
+            end
+        end
+    end
+end)
+
+-- ==========================================
+-- LOGIKA MINIMIZE & TOGGLE
+-- ==========================================
 MinimizeBtn.Parent = Frame
 MinimizeBtn.Position = UDim2.new(0, 10, 0, 275)
 MinimizeBtn.Size = UDim2.new(0, 200, 0, 35)
