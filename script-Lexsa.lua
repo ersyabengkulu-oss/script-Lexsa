@@ -1,41 +1,52 @@
--- LEXSA V11.3: AUTO-CAST FIXED [2026-02-06]
+-- LEXSA V11.4: ANTI-CRASH & AUTO-CAST [2026-02-06]
+local Player = game.Players.LocalPlayer
+local RS = game:GetService("ReplicatedStorage")
+
+-- 1. BUAT UI DULU (PASTI MUNCUL)
+local ScreenGui = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 150, 0, 70)
+MainFrame.Position = UDim2.new(0.5, -75, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.Draggable = true 
+
+local CatchBtn = Instance.new("TextButton", MainFrame)
+CatchBtn.Size = UDim2.new(1, -10, 1, -10)
+CatchBtn.Position = UDim2.new(0, 5, 0, 5)
+CatchBtn.Text = "START GACOR"
+CatchBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+CatchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
     CatchBtn.Text = catching and "GACOR: ON" or "GACOR: OFF"
-    CatchBtn.BackgroundColor3 = catching and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(200, 0, 0)
+    CatchBtn.BackgroundColor3 = catching and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
     
     if catching then
         task.spawn(function()
-            local RS = game:GetService("ReplicatedStorage")
-            local Net = RS.Packages._Index:FindFirstChild("sleitnick_net@0.2.0", true).net
+            -- Cari Net secara otomatis tanpa bikin crash
+            local Net = RS:FindFirstChild("net", true) or RS.Packages._Index:FindFirstChild("sleitnick_net@0.2.0", true).net
             
             while catching do
                 pcall(function()
-                    -- 1. PASTIKAN PEGANG ROD
+                    -- A. PEGANG ROD
                     Net["RE/EquipToolFromHotbar"]:FireServer(1)
-                    task.wait(0.6) -- Beri waktu karakter untuk benar-benar pegang rod
+                    task.wait(0.5)
                     
-                    -- 2. NAROK UMPAN (Cast)
-                    -- Kita panggil remote-nya, lalu paksa klik pancingannya
+                    -- B. NAROK UMPAN (MELEMPAR)
                     Net["RF/ChargeFishingRod"]:InvokeServer(100)
                     task.wait(0.2)
-                    game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool"):Activate()
-                    print("LEXSA: Umpan Ditarok...")
+                    Player.Character:FindFirstChildOfClass("Tool"):Activate() -- Animasi fisik
                     
-                    -- 3. JEDA BERMAIN (WAJIB LAMA)
-                    -- Kita tunggu 2.5 detik agar kail benar-benar dianggap sah di air
-                    task.wait(2.5) 
+                    -- C. TUNGGU IKAN NYANGKUT (Jeda Biar Gak Macet)
+                    task.wait(2.2) 
                     
-                    -- 4. TARIK IKAN CEPAT
+                    -- D. TARIK & KLAIM
                     Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
-                    task.wait(0.2)
                     Net["RE/ClaimNotification"]:FireServer("Fish")
-                    print("LEXSA: Ikan Didapat!")
-                    
-                    -- 5. JEDA RESET (Agar tidak error di lemparan berikutnya)
-                    task.wait(2.0)
                 end)
+                task.wait(1.5) -- Jeda istirahat karakter
             end
         end)
     end
