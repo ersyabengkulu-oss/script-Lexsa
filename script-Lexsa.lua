@@ -1,24 +1,9 @@
--- LEXSA V9.4: THE PERFECT TIMING [2026-02-06]
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 200, 0, 100)
-MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.Active = true
-MainFrame.Draggable = true 
-
-local CatchBtn = Instance.new("TextButton", MainFrame)
-CatchBtn.Size = UDim2.new(1, -20, 0, 50)
-CatchBtn.Position = UDim2.new(0, 10, 0, 25)
-CatchBtn.Text = "KLIK UNTUK GACOR"
-CatchBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-CatchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-
+-- LEXSA V10.1: FIX AUTO-CAST (NAROK UMPAN) [2026-02-06]
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
     CatchBtn.Text = catching and "GACOR: ON" or "GACOR: OFF"
-    CatchBtn.BackgroundColor3 = catching and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(200, 0, 0)
+    CatchBtn.BackgroundColor3 = catching and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(200, 0, 0)
     
     if catching then
         task.spawn(function()
@@ -27,22 +12,39 @@ CatchBtn.MouseButton1Click:Connect(function()
             
             while catching do
                 pcall(function()
-                    -- 1. PASTIKAN PEGANG ALAT
-                    Net["RE/EquipToolFromHotbar"]:FireServer(1)
-                    task.wait(0.2)
+                    local Player = game.Players.LocalPlayer
+                    local Char = Player.Character
+                    local Humanoid = Char:FindFirstChildOfClass("Humanoid")
                     
-                    -- 2. LEMPAR (NAROK UMPAN) - Harus yang pertama!
-                    Net["RF/ChargeFishingRod"]:InvokeServer(100)
-                    print("LEXSA: Umpan Terlempar")
-                    task.wait(0.5) -- Beri waktu umpan sampai ke air
+                    -- 1. CEK ALAT
+                    local Tool = Char:FindFirstChildOfClass("Tool")
+                    if not Tool then
+                        Net["RE/EquipToolFromHotbar"]:FireServer(1)
+                        task.wait(0.3)
+                        Tool = Char:FindFirstChildOfClass("Tool")
+                    end
                     
-                    -- 3. TARIK & KLAIM (FAST REEL)
-                    Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
-                    task.wait(0.1)
-                    Net["RE/ClaimNotification"]:FireServer("Fish")
-                    print("LEXSA: Ikan Didapat!")
+                    if Tool then
+                        -- 2. RESET STATE (Lompat Kecil agar server refresh status)
+                        -- Ini trik agar "Narok Umpan" tidak macet
+                        Humanoid.Jump = true 
+                        task.wait(0.2)
+                        
+                        -- 3. NAROK UMPAN (Melempar)
+                        Tool:Activate() 
+                        Net["RF/ChargeFishingRod"]:InvokeServer(100) 
+                        print("LEXSA: Umpan Berhasil Ditarok!")
+                        
+                        -- 4. TUNGGU IKAN NYANGKUT (Beri jeda agar tidak dianggap spam)
+                        task.wait(0.7) 
+                        
+                        -- 5. TARIK IKAN (Fast Reel)
+                        Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
+                        Net["RE/ClaimNotification"]:FireServer("Fish")
+                        print("LEXSA: Ikan Ditarik!")
+                    end
                 end)
-                task.wait(1.5) -- Delay total antar tarikan agar server tidak curiga
+                task.wait(0.5) -- Jeda antar siklus
             end
         end)
     end
