@@ -1,71 +1,78 @@
--- LEXSA BRAINROT V2.2: LAVA WALKER [2026-02-06]
-local Player = game.Players.LocalPlayer
-local Char = Player.Character or Player.CharacterAdded:Wait()
-local Hum = Char:WaitForChild("Humanoid")
+-- LEXSA V7.2: LAVA WALKING + HIDE FEATURE
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LexsaCompact"
+ScreenGui.Parent = game:GetService("CoreGui")
 
--- UI CLEAN & MINIMIZE
-local SGui = Instance.new("ScreenGui", Player.PlayerGui)
-local Main = Instance.new("Frame", SGui)
-Main.Size = UDim2.new(0, 150, 0, 100)
-Main.Position = UDim2.new(0, 10, 0.5, -50) -- Di samping kiri biar gak ganggu tengah
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 180, 0, 100)
+Frame.Position = UDim2.new(0.4, 0, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 20)
-Title.Text = "LEXSA BRAINROT"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundTransparency = 1
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.8, 0, 0, 30)
+Title.Text = "LEXSA LAVA CORE"
+Title.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Parent = Frame
 
--- 1. FITUR LAVA WALKING (ANTI-COLLISION)
-local walking = false
-local WalkBtn = Instance.new("TextButton", Main)
-WalkBtn.Size = UDim2.new(1, -10, 0, 30)
-WalkBtn.Position = UDim2.new(0, 5, 0, 25)
-WalkBtn.Text = "LAVA WALK: OFF"
-WalkBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+-- TOMBOL SEMBUNYIKAN (HIDE)
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0.2, 0, 0, 30)
+HideBtn.Position = UDim2.new(0.8, 0, 0, 0)
+HideBtn.Text = "_"
+HideBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideBtn.Parent = Frame
 
-WalkBtn.MouseButton1Click:Connect(function()
-    walking = not walking
-    WalkBtn.Text = walking and "LAVA WALK: ON" or "LAVA WALK: OFF"
-    WalkBtn.BackgroundColor3 = walking and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+-- TOMBOL BUKA KEMBALI (OPEN)
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Size = UDim2.new(0, 50, 0, 25)
+OpenBtn.Position = UDim2.new(0, 10, 0, 10)
+OpenBtn.Text = "LEXSA"
+OpenBtn.Visible = false
+OpenBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Parent = ScreenGui
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.9, 0, 0, 45)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
+ToggleBtn.Text = "LAVA WALKING: OFF"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Parent = Frame
+
+-- LOGIKA HIDE/SHOW
+HideBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = false
+    OpenBtn.Visible = true
+end)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = true
+    OpenBtn.Visible = false
+end)
+
+local active = false
+ToggleBtn.MouseButton1Click:Connect(function()
+    active = not active
+    ToggleBtn.Text = active and "LAVA WALKING: ON" or "LAVA WALKING: OFF"
+    ToggleBtn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
     
-    -- Logika Lava Walking yang kita buat tadi
     task.spawn(function()
-        while walking do
-            for _, v in pairs(game.Workspace:GetDescendants()) do
-                if v.Name:lower():find("lava") and v:IsA("BasePart") then
-                    v.CanTouch = false -- Mematikan deteksi damage
+        while active do
+            pcall(function()
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    if v.Name:lower():find("lava") and v:IsA("BasePart") then
+                        v.CanCollide = true
+                        if v:FindFirstChild("TouchInterest") then v.TouchInterest:Destroy() end
+                    end
                 end
-            end
-            task.wait(2) -- Scan ulang setiap 2 detik jika ada lava baru muncul
+            end)
+            task.wait(1.5)
         end
     end)
-end)
-
--- 2. TOMBOL SPEED (AMAN DARI KICK)
-local SpdBtn = Instance.new("TextButton", Main)
-SpdBtn.Size = UDim2.new(1, -10, 0, 30)
-SpdBtn.Position = UDim2.new(0, 5, 0, 60)
-SpdBtn.Text = "SPEED: 35"
-SpdBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-
-SpdBtn.MouseButton1Click:Connect(function()
-    Hum.WalkSpeed = (Hum.WalkSpeed == 16) and 35 or 16
-    SpdBtn.Text = (Hum.WalkSpeed == 35) and "SPEED: GACOR" or "SPEED: NORMAL"
-end)
-
--- 3. TOMBOL SEMBUNYIKAN (MINIMIZE)
-local MinBtn = Instance.new("TextButton", SGui)
-MinBtn.Size = UDim2.new(0, 50, 0, 20)
-MinBtn.Position = UDim2.new(0, 10, 0.5, -75)
-MinBtn.Text = "HIDE"
-MinBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MinBtn.TextColor3 = Color3.new(1, 1, 1)
-
-MinBtn.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-    MinBtn.Text = Main.Visible and "HIDE" or "SHOW"
 end)
