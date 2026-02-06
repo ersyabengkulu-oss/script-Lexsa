@@ -1,7 +1,9 @@
 -- LEXSA V7.2: LAVA WALKING + HIDE FEATURE
+local Player = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "LexsaCompact"
-ScreenGui.Parent = game:GetService("CoreGui")
+-- Pindah ke PlayerGui karena CoreGui sering kena blokir executor
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 180, 0, 100)
@@ -18,7 +20,6 @@ Title.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Parent = Frame
 
--- TOMBOL SEMBUNYIKAN (HIDE)
 local HideBtn = Instance.new("TextButton")
 HideBtn.Size = UDim2.new(0.2, 0, 0, 30)
 HideBtn.Position = UDim2.new(0.8, 0, 0, 0)
@@ -27,10 +28,9 @@ HideBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 HideBtn.Parent = Frame
 
--- TOMBOL BUKA KEMBALI (OPEN)
 local OpenBtn = Instance.new("TextButton")
-OpenBtn.Size = UDim2.new(0, 50, 0, 25)
-OpenBtn.Position = UDim2.new(0, 10, 0, 10)
+OpenBtn.Size = UDim2.new(0, 60, 0, 30)
+OpenBtn.Position = UDim2.new(0, 10, 0.1, 0)
 OpenBtn.Text = "LEXSA"
 OpenBtn.Visible = false
 OpenBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 0)
@@ -45,7 +45,6 @@ ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Parent = Frame
 
--- LOGIKA HIDE/SHOW
 HideBtn.MouseButton1Click:Connect(function()
     Frame.Visible = false
     OpenBtn.Visible = true
@@ -66,13 +65,18 @@ ToggleBtn.MouseButton1Click:Connect(function()
         while active do
             pcall(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if v.Name:lower():find("lava") and v:IsA("BasePart") then
-                        v.CanCollide = true
-                        if v:FindFirstChild("TouchInterest") then v.TouchInterest:Destroy() end
+                    -- Mencari objek lava dengan lebih teliti
+                    if v:IsA("BasePart") and v.Name:lower():find("lava") then
+                        v.CanCollide = true -- Agar bisa diinjak
+                        -- Menghapus sensor damage
+                        local touch = v:FindFirstChild("TouchInterest")
+                        if touch then 
+                            touch:Destroy() 
+                        end
                     end
                 end
             end)
-            task.wait(1.5)
+            task.wait(1) -- Scan lebih cepat agar lava baru langsung aman
         end
     end)
 end)
