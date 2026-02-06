@@ -25,6 +25,7 @@ end)
 -- 3. CEK WHITELIST DARI GITHUB
 local linkWhitelist = "https://raw.githubusercontent.com/ersyabengkulu-oss/script-Lexsa/main/whitelist.txt"
 local sW, cW = pcall(function() return game:HttpGet(linkWhitelist) end)
+
 if sW and cW:find(Player.Name) then
     notify("Welcome", "Akses Diterima, Lexsa!")
     
@@ -98,20 +99,9 @@ if sW and cW:find(Player.Name) then
         end)
     end)
 
-    -- FITUR SAFE ZONE
-    local safeZone = false
-    local SafeBtn = createBtn("SAFE ZONE: OFF", UDim2.new(0.05, 0, 0.35, 0), Color3.fromRGB(0, 100, 0))
-    SafeBtn.MouseButton1Click:Connect(function()
-        safeZone = not safeZone
-        SafeBtn.Text = safeZone and "SAFE ZONE: ON" or "SAFE ZONE: OFF"
-        task.spawn(function()
-            while safeZone do
-                if Character.Humanoid.Health < 30 then
-                    Root.CFrame = CFrame.new(0, 50, 0) -- Koordinat aman
-                    notify("Security", "Kritis! Kabur ke tempat aman.")
-                    task.wait(5)
-                end
-                task.wait(0.5)
-            end
-        end)
-    end)
+    -- TOMBOL CLOSE
+    local CloseBtn = createBtn("CLOSE MENU", UDim2.new(0.05, 0, 0.85, 0), Color3.fromRGB(50, 50, 50))
+    CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+else
+    notify("Error", "Akun Tidak Terdaftar!")
+end
