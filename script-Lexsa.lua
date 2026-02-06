@@ -1,54 +1,23 @@
--- [[ LEXSA V18 - ABSOLUTE SNOW & TREE DESTROYER ]]
+-- [[ LEXSA BUG RESEARCHER - AUTO TESTER ]]
 
-local Player = game.Players.LocalPlayer
-local Root = Player.Character:WaitForChild("HumanoidRootPart")
 local RS = game:GetService("ReplicatedStorage")
-local VU = game:GetService("VirtualUser")
+local Remote = RS.RemoteEvent.ServerRemoteEvent -- Remote yang kamu temukan
 
--- GUI SEDERHANA
-local sg = Instance.new("ScreenGui", Player.PlayerGui)
-local btn = Instance.new("TextButton", sg)
-btn.Size = UDim2.new(0, 250, 0, 60)
-btn.Position = UDim2.new(0.5, -125, 0.15, 0)
-btn.Text = "START SNOW HUNTING: OFF"
-btn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
-btn.TextColor3 = Color3.new(0,0,0)
+-- Mengetes peningkatan level dengan angka yang berbeda
+local testValues = {50, 100, 500} -- Kita coba tes dari angka 50 sampai 500
 
-_G.LexsaFarm = false
-btn.MouseButton1Click:Connect(function()
-    _G.LexsaFarm = not _G.LexsaFarm
-    btn.Text = _G.LexsaFarm and "SNOW HUNTING: ACTIVE" or "START SNOW HUNTING: OFF"
-    btn.BackgroundColor3 = _G.LexsaFarm and Color3.new(0, 1, 0) or Color3.fromRGB(0, 255, 255)
+print("--- Memulai Pengetesan Celah Remote ---")
+
+for _, val in ipairs(testValues) do
+    local args = {
+        [1] = "Business",
+        [2] = "\232\158\141\229\144\136_\229\174\160\231\137\169", -- ID Tanaman dari fotomu
+        [3] = val -- Mengganti angka 48 dengan nilai tes
+    }
     
-    task.spawn(function()
-        while _G.LexsaFarm do
-            pcall(function()
-                -- SCAN TARGET BERDASARKAN TEMUAN DEX KAMU
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if not _G.LexsaFarm then break end
-                    
-                    local name = v.Name
-                    -- TARGET UTAMA: SALJU (ISI PETI), POHON, COAL, DAN BATU
-                    if name == "SnowPatch4" or name == "TreeBig3" or name == "Coal" or name == "SnowStoneSmall" then
-                        -- Teleport tepat di tengah objek
-                        local targetPos = v:GetModelCFrame() or v.CFrame
-                        Root.CFrame = targetPos
-                        
-                        -- SPAM SINYAL REMOTE (Sesuai SimpleSpy Lexsa)
-                        for i = 1, 8 do
-                            RS.RemoteEvents.AnalyticsTimeFirstPerson:FireServer(0, 60)
-                        end
-                        
-                        -- PAKSA KLIK KAPAK
-                        VU:CaptureController()
-                        VU:ClickButton1(Vector2.new(0,0))
-                        
-                        -- Jeda supaya peti sempat muncul
-                        task.wait(0.3)
-                    end
-                end
-            end)
-            task.wait(0.1) -- Cek target baru dengan cepat
-        end
-    end)
-end)
+    print("Mencoba mengirim nilai: " .. val)
+    Remote:FireServer(unpack(args)) -- Kirim ke server
+    task.wait(1) -- Beri jeda agar tidak langsung terdeteksi spam
+end
+
+print("--- Tes Selesai. Cek apakah DPS atau Level tanamanmu berubah! ---")
