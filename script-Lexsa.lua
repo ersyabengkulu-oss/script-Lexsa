@@ -3,8 +3,9 @@ local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 -- 1. KONFIGURASI (GANTI INI!)
-local linkWhitelist = "LINK_RAW_WHITELIST_KAMU" 
-local linkKey = "LINK_RAW_KEY_KAMU"
+local linkWhitelist = "https://raw.githubusercontent.com/ersyabengkulu-oss/script-Lexsa/main/whitelist.txt"
+ 
+local linkKey = "https://raw.githubusercontent.com/ersyabengkulu-oss/script-Lexsa/main/key.txt"
 local linkIklan = "https://linkvertise.com/lexsa-key" 
 
 -- 2. FUNGSI MENU UTAMA (LAVA WALKING)
