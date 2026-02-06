@@ -1,40 +1,24 @@
--- SCRIPT TRICK "Knit Ghost"
+-- Script Auto Sell Anti-Ribet
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local MiningRF, SellRF
 
--- Mencari Remote secara otomatis di seluruh folder
-for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-    if v.Name == "HitRock" and v:IsA("RemoteFunction") then
-        MiningRF = v
-    elseif v.Name == "SellJewels" and v:IsA("RemoteFunction") then
-        SellRF = v
+-- Fungsi mencari Remote secara otomatis
+local function findRemote(name)
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if v.Name == name and v:IsA("RemoteFunction") then
+            return v
+        end
     end
 end
 
--- Eksekusi Penambangan & Penjualan
-if MiningRF and SellRF then
-    print("Remote Berhasil Ditemukan! Mulai Farming...")
-    
+local sellRemote = findRemote("SellJewels")
+
+if sellRemote then
+    print("Remote Jual Ketemu! Mencoba menjual...")
     spawn(function()
-        while task.wait(0.2) do
-            -- Kita cari batu terdekat
-            for _, stone in pairs(game.Workspace:GetChildren()) do
-                if stone:IsA("Model") and stone.Name:find("_") then
-                    local p = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-                    if (p - stone:GetModelCFrame().Position).Magnitude < 15 then
-                        -- Gunakan pcall agar tidak crash kalau batu hancur
-                        pcall(function() MiningRF:InvokeServer(stone.Name) end)
-                    end
-                end
-            end
-        end
-    end)
-    
-    spawn(function()
-        while task.wait(10) do
-            pcall(function() SellRF:InvokeServer() end)
+        while task.wait(5) do
+            sellRemote:InvokeServer()
         end
     end)
 else
-    print("Gagal menemukan Remote. Coba gerakkan karaktermu dulu!")
+    print("Remote Jual tidak ditemukan di ReplicatedStorage!")
 end
