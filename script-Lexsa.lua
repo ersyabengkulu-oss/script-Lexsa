@@ -1,22 +1,39 @@
+-- 1. PENGATURAN AWAL
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- FUNGSI CEK WHITELIST DARI GITHUB
-local function isWhitelisted()
-    local success, content = pcall(function()
-        return game:HttpGet("LINK_RAW_WHITELIST_TXT_KAMU") -- Ganti dengan link raw whitelist.txt
-    end)
-    if success and content:find(Player.Name) then
-        return true
-    end
-    return false
+-- GANTI LINK DI BAWAH INI DENGAN LINK RAW KAMU!
+local linkWhitelist = "ISI_LINK_RAW_WHITELIST_TXT_KAMU" 
+local linkKey = "ISI_LINK_RAW_KEY_TXT_KAMU"
+local linkIklan = "https://link-linkvertise-kamu.com" 
+
+-- 2. FUNGSI MENU UTAMA (LAVA WALKING)
+local function startMainScript()
+    -- Copy kode menu LEXSA LAVA CORE kamu yang sudah berhasil tadi ke sini
+    -- Pastikan bagian 'Parent' mengarah ke PlayerGui
+    print("Menjalankan Menu Utama...") 
 end
 
--- LOGIKA PEMBAGIAN AKSES
-if isWhitelisted() then
-    print("Akses Whitelist Diterima! Halo Bos Lexsa.")
-    -- Masukkan fungsi menu LAVA WALKING kamu di sini
+-- 3. CEK WHITELIST
+local isVip = false
+local successW, contentW = pcall(function() return game:HttpGet(linkWhitelist) end)
+if successW and contentW:find(Player.Name) then
+    isVip = true
+end
+
+if isVip then
+    startMainScript() -- Langsung buka kalau dia VIP
 else
-    print("User Biasa. Menampilkan Key System...")
-    -- Tampilkan KeyGui (Sistem Key Linkvertise) yang kita buat tadi
+    -- 4. TAMPILKAN KEY SYSTEM (Jika Bukan VIP)
+    local KeyGui = Instance.new("ScreenGui", PlayerGui)
+    -- ... (Masukkan semua kode KeyGui yang ada tombol CHECK dan GET KEY tadi)
+    
+    -- Contoh Logika Tombol CHECK:
+    -- CheckBtn.MouseButton1Click:Connect(function()
+    --    local successK, currentKey = pcall(function() return game:HttpGet(linkKey) end)
+    --    if successK and KeyInput.Text == currentKey:gsub("%s+", "") then
+    --        KeyGui:Destroy()
+    --        startMainScript()
+    --    end
+    -- end)
 end
