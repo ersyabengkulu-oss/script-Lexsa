@@ -1,50 +1,54 @@
--- [[ LEXSA V17 - SNOW & TREASURE SPECIALIST ]]
+-- [[ LEXSA V18 - ABSOLUTE SNOW & TREE DESTROYER ]]
 
 local Player = game.Players.LocalPlayer
 local Root = Player.Character:WaitForChild("HumanoidRootPart")
+local RS = game:GetService("ReplicatedStorage")
+local VU = game:GetService("VirtualUser")
 
--- GUI
+-- GUI SEDERHANA
 local sg = Instance.new("ScreenGui", Player.PlayerGui)
 local btn = Instance.new("TextButton", sg)
 btn.Size = UDim2.new(0, 250, 0, 60)
-btn.Position = UDim2.new(0.5, -125, 0.1, 0)
-btn.Text = "AUTO SNOW & TREASURE: OFF"
-btn.BackgroundColor3 = Color3.fromRGB(0, 100, 200) -- Warna Biru Salju
-btn.TextColor3 = Color3.new(1,1,1)
+btn.Position = UDim2.new(0.5, -125, 0.15, 0)
+btn.Text = "START SNOW HUNTING: OFF"
+btn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+btn.TextColor3 = Color3.new(0,0,0)
 
-_G.SnowFarm = false
+_G.LexsaFarm = false
 btn.MouseButton1Click:Connect(function()
-    _G.SnowFarm = not _G.SnowFarm
-    btn.Text = _G.SnowFarm and "SNOW HUNTING: ON" or "AUTO SNOW: OFF"
-    btn.BackgroundColor3 = _G.SnowFarm and Color3.new(0, 1, 1) or Color3.fromRGB(0, 100, 200)
+    _G.LexsaFarm = not _G.LexsaFarm
+    btn.Text = _G.LexsaFarm and "SNOW HUNTING: ACTIVE" or "START SNOW HUNTING: OFF"
+    btn.BackgroundColor3 = _G.LexsaFarm and Color3.new(0, 1, 0) or Color3.fromRGB(0, 255, 255)
     
     task.spawn(function()
-        while _G.SnowFarm do
+        while _G.LexsaFarm do
             pcall(function()
-                for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if not _G.SnowFarm then break end
+                -- SCAN TARGET BERDASARKAN TEMUAN DEX KAMU
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if not _G.LexsaFarm then break end
                     
-                    local n = v.Name
-                    -- PRIORITAS: SALJU (KARENA ADA PETI), BATU, DAN POHON
-                    if n == "SnowPatch4" or n == "SnowStoneSmall" or n == "TreeBig3" or n == "Coal" then
-                        Root.CFrame = v:GetModelCFrame() or v.CFrame
+                    local name = v.Name
+                    -- TARGET UTAMA: SALJU (ISI PETI), POHON, COAL, DAN BATU
+                    if name == "SnowPatch4" or name == "TreeBig3" or name == "Coal" or name == "SnowStoneSmall" then
+                        -- Teleport tepat di tengah objek
+                        local targetPos = v:GetModelCFrame() or v.CFrame
+                        Root.CFrame = targetPos
                         
-                        -- Sinyal Turbo Lexsa
-                        for i = 1, 5 do
-                            game:GetService("ReplicatedStorage").RemoteEvents.AnalyticsTimeFirstPerson:FireServer(0, 60)
+                        -- SPAM SINYAL REMOTE (Sesuai SimpleSpy Lexsa)
+                        for i = 1, 8 do
+                            RS.RemoteEvents.AnalyticsTimeFirstPerson:FireServer(0, 60)
                         end
                         
-                        -- Klik Hancurkan
-                        game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
-                        task.wait(0.4) -- Jeda sedikit biar petinya sempat kebuka
-                        game:GetService("VirtualUser"):Button1Up(Vector2.new(0,0))
+                        -- PAKSA KLIK KAPAK
+                        VU:CaptureController()
+                        VU:ClickButton1(Vector2.new(0,0))
                         
-                        -- Fitur Tambahan: Berhenti sebentar kalau nemu SnowPatch biar lootingnya aman
-                        if n == "SnowPatch4" then task.wait(0.5) end
+                        -- Jeda supaya peti sempat muncul
+                        task.wait(0.3)
                     end
                 end
             end)
-            task.wait(0.5)
+            task.wait(0.1) -- Cek target baru dengan cepat
         end
     end)
 end)
