@@ -1,4 +1,4 @@
--- LEXSA V11.2: SOLUSI NAROK UMPAN MACET [2026-02-06]
+-- LEXSA V11.3: AUTO-CAST FIXED [2026-02-06]
 local catching = false
 CatchBtn.MouseButton1Click:Connect(function()
     catching = not catching
@@ -12,30 +12,29 @@ CatchBtn.MouseButton1Click:Connect(function()
             
             while catching do
                 pcall(function()
-                    -- 1. PEGANG ALAT & RESET STATUS
+                    -- 1. PASTIKAN PEGANG ROD
                     Net["RE/EquipToolFromHotbar"]:FireServer(1)
-                    task.wait(0.5) -- Jeda agar karakter stabil
+                    task.wait(0.6) -- Beri waktu karakter untuk benar-benar pegang rod
                     
-                    -- 2. NAROK UMPAN (Pemicu Utama)
-                    -- Memanggil Charge dua kali untuk memastikan server menerima perintah
+                    -- 2. NAROK UMPAN (Cast)
+                    -- Kita panggil remote-nya, lalu paksa klik pancingannya
                     Net["RF/ChargeFishingRod"]:InvokeServer(100)
-                    task.wait(0.1)
+                    task.wait(0.2)
                     game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool"):Activate()
+                    print("LEXSA: Umpan Ditarok...")
                     
-                    -- 3. JEDA MENUNGGU (Penting!)
-                    -- Beri waktu 2 detik agar umpan benar-benar dianggap sah oleh game
-                    task.wait(2.0) 
+                    -- 3. JEDA BERMAIN (WAJIB LAMA)
+                    -- Kita tunggu 2.5 detik agar kail benar-benar dianggap sah di air
+                    task.wait(2.5) 
                     
-                    -- 4. NARIK IKAN CEPAT
+                    -- 4. TARIK IKAN CEPAT
                     Net["RF/CatchFishCompleted"]:InvokeServer("Fish")
-                    task.wait(0.3)
-                    
-                    -- 5. KLAIM HADIAH
+                    task.wait(0.2)
                     Net["RE/ClaimNotification"]:FireServer("Fish")
-                    print("LEXSA: Ikan Didapat, Menunggu Reset...")
+                    print("LEXSA: Ikan Didapat!")
                     
-                    -- 6. JEDA RESET SERVER (Agar tidak macet di lemparan berikutnya)
-                    task.wait(1.5) 
+                    -- 5. JEDA RESET (Agar tidak error di lemparan berikutnya)
+                    task.wait(2.0)
                 end)
             end
         end)
