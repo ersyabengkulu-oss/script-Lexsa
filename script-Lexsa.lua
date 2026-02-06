@@ -25,7 +25,6 @@ end)
 -- 3. CEK WHITELIST DARI GITHUB
 local linkWhitelist = "https://raw.githubusercontent.com/ersyabengkulu-oss/script-Lexsa/main/whitelist.txt"
 local sW, cW = pcall(function() return game:HttpGet(linkWhitelist) end)
-
 if sW and cW:find(Player.Name) then
     notify("Welcome", "Akses Diterima, Lexsa!")
     
