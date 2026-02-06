@@ -1,4 +1,4 @@
--- [[ LEXSA V4 FINAL - ALL FEATURES INTEGRATED ]]
+-- [[ LEXSA V5 ULTIMATE - AUTO FARM & WOOD CUTTER ]]
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -27,20 +27,20 @@ local linkWhitelist = "https://raw.githubusercontent.com/ersyabengkulu-oss/scrip
 local sW, cW = pcall(function() return game:HttpGet(linkWhitelist) end)
 
 if sW and cW:find(Player.Name) then
-    notify("Welcome", "Akses Diterima, Lexsa!")
+    notify("Welcome", "Akses Diterima, Lexsa!") 
     
     -- GUI MAIN FRAME
     local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
     local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 220, 0, 350)
+    Frame.Size = UDim2.new(0, 220, 0, 400) -- Ukuran lebih panjang untuk fitur baru
     Frame.Position = UDim2.new(0.5, -110, 0.2, 0)
-    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     Frame.Active = true
     Frame.Draggable = true
 
     local function createBtn(text, pos, color)
         local btn = Instance.new("TextButton", Frame)
-        btn.Size = UDim2.new(0.9, 0, 0, 40)
+        btn.Size = UDim2.new(0.9, 0, 0, 35)
         btn.Position = pos
         btn.Text = text
         btn.BackgroundColor3 = color
@@ -49,68 +49,69 @@ if sW and cW:find(Player.Name) then
         return btn
     end
 
-    -- [ FITUR 1: STABLE FARM + REMOTEEVENT ]
-    local stableFarm = false
-    local FarmBtn = createBtn("STABLE FARM: OFF", UDim2.new(0.05, 0, 0.05, 0), Color3.fromRGB(0, 80, 150))
+    -- [ FITUR 1: AUTO WOOD & FARM ]
+    local autoFarm = false
+    local FarmBtn = createBtn("AUTO FARM & WOOD: OFF", UDim2.new(0.05, 0, 0.05, 0), Color3.fromRGB(0, 80, 150))
     FarmBtn.MouseButton1Click:Connect(function()
-        stableFarm = not stableFarm
-        FarmBtn.Text = stableFarm and "STABLE FARM: ON" or "STABLE FARM: OFF"
+        autoFarm = not autoFarm
+        FarmBtn.Text = autoFarm and "AUTO FARM & WOOD: ON" or "AUTO FARM & WOOD: OFF"
         task.spawn(function()
-            while stableFarm do
-                if Character.Humanoid.Health > 0 then
-                    pcall(function()
-                        for _, obj in pairs(game.Workspace:GetDescendants()) do
-                            if obj.Name:lower():find("bolt") or obj.Name:lower():find("baut") then
-                                Root.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
-                                task.wait(0.5)
-                                -- FIX: Menggunakan Remote Event dari SimpleSpy kamu
-                                local args = {[1] = 0, [2] = 60}
-                                game:GetService("ReplicatedStorage").RemoteEvents.AnalyticsTimeFirstPerson:FireServer(unpack(args))
-                                notify("Farm", "Baut Berhasil Diambil!")
-                            end
+            while autoFarm do
+                pcall(function()
+                    for _, obj in pairs(game.Workspace:GetDescendants()) do
+                        -- Mencari Pohon, Kayu, atau Baut
+                        if obj.Name:lower():find("tree") or obj.Name:lower():find("wood") or obj.Name:lower():find("bolt") then
+                            Root.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.5)
+                            
+                            -- Kirim Sinyal RemoteEvent dari SimpleSpy Lexsa
+                            local args = {[1] = 0, [2] = 60}
+                            game:GetService("ReplicatedStorage").RemoteEvents.AnalyticsTimeFirstPerson:FireServer(unpack(args))
+                            
+                            notify("Action", "Memproses: " .. obj.Name)
                         end
-                    end)
-                end
-                task.wait(1.5)
+                    end
+                end)
+                task.wait(1)
             end
         end)
     end)
 
-    -- [ FITUR 2: AUTO DEPOSIT ]
-    local autoDepo = false
-    local DepoBtn = createBtn("AUTO DEPOSIT: OFF", UDim2.new(0.05, 0, 0.2, 0), Color3.fromRGB(100, 50, 0))
-    DepoBtn.MouseButton1Click:Connect(function()
-        autoDepo = not autoDepo
-        DepoBtn.Text = autoDepo and "AUTO DEPOSIT: ON" or "AUTO DEPOSIT: OFF"
+    -- [ FITUR 2: AUTO DEPOSIT / BURN ]
+    local autoBurn = false
+    local BurnBtn = createBtn("AUTO DEPOSIT/BURN: OFF", UDim2.new(0.05, 0, 0.15, 0), Color3.fromRGB(150, 50, 0))
+    BurnBtn.MouseButton1Click:Connect(function()
+        autoBurn = not autoBurn
+        BurnBtn.Text = autoBurn and "AUTO BURN: ON" or "AUTO BURN: OFF"
         task.spawn(function()
-            while autoDepo do
+            while autoBurn do
                 pcall(function()
-                    for _, t in pairs(game.Workspace:GetDescendants()) do
-                        if t.Name:lower():find("deposit") or t.Name:lower():find("chest") then
-                            Root.CFrame = t.CFrame + Vector3.new(0, 3, 0)
-                            task.wait(0.7)
-                            firetouchinterest(Root, t, 0)
-                            firetouchinterest(Root, t, 1)
-                            notify("Deposit", "Barang Disimpan!")
+                    for _, target in pairs(game.Workspace:GetDescendants()) do
+                        -- Mencari Api atau Tempat Simpan
+                        if target.Name:lower():find("fire") or target.Name:lower():find("api") or target.Name:lower():find("deposit") then
+                            Root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.8)
+                            firetouchinterest(Root, target, 0)
+                            firetouchinterest(Root, target, 1)
                         end
                     end
                 end)
-                task.wait(3)
+                task.wait(2)
             end
         end)
     end)
 
     -- [ FITUR 3: SAFE ZONE ]
     local safeZone = false
-    local SafeBtn = createBtn("SAFE ZONE: OFF", UDim2.new(0.05, 0, 0.35, 0), Color3.fromRGB(0, 100, 0))
+    local SafeBtn = createBtn("SAFE ZONE: OFF", UDim2.new(0.05, 0, 0.25, 0), Color3.fromRGB(0, 100, 0))
     SafeBtn.MouseButton1Click:Connect(function()
         safeZone = not safeZone
         SafeBtn.Text = safeZone and "SAFE ZONE: ON" or "SAFE ZONE: OFF"
         task.spawn(function()
             while safeZone do
-                if Character.Humanoid.Health < 30 and Character.Humanoid.Health > 0 then
-                    Root.CFrame = CFrame.new(0, 100, 0) -- Teleport ke langit (Safe)
-                    notify("Security", "Kritis! Kabur ke langit.")
+                if Character.Humanoid.Health < 35 then
+                    Root.CFrame = CFrame.new(0, 150, 0) -- Teleport ke tempat aman
+                    notify("Security", "Darah Rendah! Kabur.")
                     task.wait(5)
                 end
                 task.wait(0.5)
@@ -119,8 +120,8 @@ if sW and cW:find(Player.Name) then
     end)
 
     -- TOMBOL CLOSE
-    local CloseBtn = createBtn("CLOSE MENU", UDim2.new(0.05, 0, 0.85, 0), Color3.fromRGB(60, 60, 60))
+    local CloseBtn = createBtn("CLOSE MENU", UDim2.new(0.05, 0, 0.88, 0), Color3.fromRGB(60, 60, 60))
     CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 else
-    notify("Error", "Akun Tidak Terdaftar di Whitelist!")
+    notify("Error", "Akun Tidak Terdaftar!")
 end
