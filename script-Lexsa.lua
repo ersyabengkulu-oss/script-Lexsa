@@ -1,10 +1,17 @@
--- [[ LEXSA BUG RESEARCH - FIXED PATH ]]
+-- [[ LEXSA AUTO REBIRTH PROOF ]]
 
-local args = {
-    [1] = "Business",
-    [2] = "\232\158\141\229\144\136_\229\174\160\231\137\169", -- ID Tanaman kamu
-    [3] = 60 -- Kita coba naikkan ke 60 untuk tes validasi
-}
+_G.AutoRebirth = true -- Ubah ke false untuk berhenti
 
--- Menggunakan jalur lengkap sesuai hierarki folder di SimpleSpy
-game:GetService("ReplicatedStorage").RemoteEvent.ServerRemoteEvent:FireServer(unpack(args))
+spawn(function()
+    while _G.AutoRebirth do
+        local args = {
+            [1] = "Rebirth" -- Perintah dari SimpleSpy kamu
+        }
+        
+        -- Jalur RemoteEvent yang sudah kita perbaiki
+        game:GetService("ReplicatedStorage").RemoteEvent.ServerRemoteEvent:FireServer(unpack(args))
+        
+        print("Mencoba Rebirth Otomatis...")
+        task.wait(2) -- Jeda agar tidak langsung ditendang server
+    end
+end)
