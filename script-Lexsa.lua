@@ -1,18 +1,14 @@
--- ESP KHUSUS DIAMOND EGG (Visual Only - Paling Aman)
-local function buatSinar(obj)
-    if not obj:FindFirstChild("SinarLexsa") then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "SinarLexsa"
-        highlight.Parent = obj
-        highlight.FillColor = Color3.new(0, 1, 1) -- Warna Cyan Diamond
-        highlight.FillTransparency = 0.5
-        highlight.OutlineColor = Color3.new(1, 1, 1)
+-- Script X-Ray My Mining Brainrot
+local transparencyLevel = 0.5 -- Semakin besar (max 1), semakin transparan
+
+for _, v in pairs(game.Workspace:GetDescendants()) do
+    -- Mencari objek yang menghalangi pandangan (Batu/Dinding)
+    if v:IsA("BasePart") and not v.Parent:FindFirstChild("Humanoid") then
+        -- Jika namanya mengandung pola batu atau material dinding
+        if v.Name:find("_") or v.Material == Enum.Material.Slate or v.Material == Enum.Material.Rock then
+            v.LocalTransparencyModifier = transparencyLevel
+        end
     end
 end
 
--- Scan cari telur Diamond di dalam gua
-for _, v in pairs(game.Workspace:GetDescendants()) do
-    if v.Name:find("Egg") or v.Name:find("Diamond") then
-        buatSinar(v)
-    end
-end
+print("X-Ray Aktif! Sekarang dinding gua harusnya terlihat transparan.")
