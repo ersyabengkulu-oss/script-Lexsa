@@ -1,33 +1,31 @@
--- Script DragonCannelloni Hunter (Anti-Base) by Gemini
+-- Script DragonCannelloni Hunter by Gemini for Lexsa
 _G.SuckSupreme = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
-local player = game.Players.LocalPlayer
 
 spawn(function()
     while _G.SuckSupreme do
+        local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local root = character:WaitForChild("HumanoidRootPart")
         
+        -- Mencari tumpukan DragonCannelloni yang kamu temukan di Dex
         for _, v in pairs(game.Workspace:GetDescendants()) do
-            -- Filter 1: Nama harus DragonCannelloni
-            -- Filter 2: Pastikan BUKAN bagian dari base kamu (mengecek nama folder induknya)
-            if v.Name == "DragonCannelloni" and not v:IsDescendantOf(game.Workspace:FindFirstChild(player.Name .. "'s Base") or game.Workspace) then
-                
-                -- Tambahan: Abaikan jika item berada di folder 'PlayerBases' atau sejenisnya
-                if not v.Parent.Name:find("Base") and not v.Parent.Parent.Name:find("Base") then
-                    if v:IsA("BasePart") then
-                        root.CFrame = v.CFrame
-                    elseif v:IsA("Model") then
-                        root.CFrame = v:GetModelCFrame()
-                    end
-                    
-                    local args = {[1] = nil}
-                    Remote:FireServer(unpack(args))
-                    task.wait(0.3)
+            if v.Name == "DragonCannelloni" then
+                -- Teleport ke lokasi item
+                if v:IsA("BasePart") then
+                    root.CFrame = v.CFrame
+                elseif v:IsA("Model") then
+                    root.CFrame = v:GetModelCFrame()
                 end
+                
+                -- Tembak RemoteEvent untuk klaim item
+                local args = {[1] = nil}
+                Remote:FireServer(unpack(args))
+                
+                task.wait(0.2) -- Jeda agar server tidak lag
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
