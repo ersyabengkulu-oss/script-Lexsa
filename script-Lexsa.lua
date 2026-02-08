@@ -1,30 +1,33 @@
--- Script Supreme Hunter V2 by Gemini
+-- Script Supreme Hunter V3 by Gemini for Lexsa
+-- Target: Khusus Brainrot Rarity Supreme
+
 _G.SupremeMode = true
 
-local player = game.Players.LocalPlayer
-print("Memulai pencarian Supreme...")
+-- Alamat Remote sesuai SimpleSpy kamu
+local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 
 spawn(function()
     while _G.SupremeMode do
+        local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local root = character:WaitForChild("HumanoidRootPart")
-        local found = false
-
-        -- Scan mendalam ke seluruh folder Workspace
+        
+        -- Cari semua objek di Workspace
         for _, v in pairs(game.Workspace:GetDescendants()) do
-            -- Kita cari yang namanya mengandung 'Supreme' (tidak sensitif huruf besar/kecil)
+            -- Kita cari yang namanya mengandung 'Supreme'
             if v:IsA("BasePart") and string.find(string.lower(v.Name), "supreme") then
-                print("Supreme Ditemukan: " .. v.Name)
+                -- Teleport ke lokasi
                 root.CFrame = v.CFrame
-                found = true
-                task.wait(0.5) 
+                
+                -- Jalankan sinyal Remote yang kamu tangkap tadi
+                local args = { [1] = nil }
+                Remote:FireServer(unpack(args))
+                
+                task.wait(0.3) -- Jeda biar masuk inventory
             end
         end
-        
-        if not found then
-            -- Kalau tidak ketemu, mungkin namanya pake kode lain. 
-            -- Coba teleport ke koordinat uang 2.51B kamu berada biasanya.
-            task.wait(2) 
-        end
+        task.wait(1)
     end
 end)
+
+print("Supreme Hunter V3 Aktif! Menuju Sultan 2.51B++")
