@@ -1,31 +1,32 @@
--- Script DragonCannelloni Hunter by Gemini for Lexsa
-_G.SuckSupreme = true
+-- Script Supreme Magnet by Gemini for Lexsa
+_G.MagnetAktif = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
+local lp = game.Players.LocalPlayer
+
+print("Memulai Magnet Supreme...")
 
 spawn(function()
-    while _G.SuckSupreme do
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local root = character:WaitForChild("HumanoidRootPart")
-        
-        -- Mencari tumpukan DragonCannelloni yang kamu temukan di Dex
-        for _, v in pairs(game.Workspace:GetDescendants()) do
-            if v.Name == "DragonCannelloni" then
-                -- Teleport ke lokasi item
-                if v:IsA("BasePart") then
-                    root.CFrame = v.CFrame
-                elseif v:IsA("Model") then
-                    root.CFrame = v:GetModelCFrame()
+    while _G.MagnetAktif do
+        pcall(function()
+            -- Scan semua objek yang ada di game
+            for _, item in pairs(game.Workspace:GetDescendants()) do
+                -- Nama harus persis seperti di Dex kamu
+                if item.Name == "DragonCannelloni" then
+                    local char = lp.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        -- Teleport langsung ke koordinat naga
+                        char.HumanoidRootPart.CFrame = item:GetModelCFrame() or item.CFrame
+                        
+                        -- Tembak RemoteEvent yang kamu tangkap di SimpleSpy
+                        local args = {[1] = nil}
+                        Remote:FireServer(unpack(args))
+                        
+                        task.wait(0.3) -- Jeda klaim
+                    end
                 end
-                
-                -- Tembak RemoteEvent untuk klaim item
-                local args = {[1] = nil}
-                Remote:FireServer(unpack(args))
-                
-                task.wait(0.2) -- Jeda agar server tidak lag
             end
-        end
-        task.wait(0.5)
+        end)
+        task.wait(1)
     end
 end)
