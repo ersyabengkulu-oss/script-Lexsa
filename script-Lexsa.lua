@@ -1,33 +1,31 @@
--- Script Targeted Folder Hunter by Gemini
-local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
-_G.TargetFarm = true
+-- Script DragonCannelloni Hunter by Gemini for Lexsa
+_G.SuckSupreme = true
 
--- Fungsi untuk ambil item
-function collect(v)
-    if v:IsA("BasePart") or v:IsA("Model") then
-        local pos = v:IsA("Model") and v:GetModelCFrame() or v.CFrame
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
-        
-        -- Tembak RemoteEvent yang kamu temukan di SimpleSpy
-        local args = {[1] = nil}
-        Remote:FireServer(unpack(args))
-        task.wait(0.2)
-    end
-end
+local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 
 spawn(function()
-    while _G.TargetFarm do
-        -- Cek folder Workspace secara mendalam
-        for _, folder in pairs(game.Workspace:GetChildren()) do
-            -- Kita cari folder yang kemungkinan besar tempat spawn item
-            if folder.Name:find("Drops") or folder.Name:find("Item") or folder.Name:find("Brainrot") then
-                for _, item in pairs(folder:GetChildren()) do
-                    if item.Name:lower():find("supreme") then
-                        collect(item)
-                    end
+    while _G.SuckSupreme do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        
+        -- Mencari tumpukan DragonCannelloni yang kamu temukan di Dex
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if v.Name == "DragonCannelloni" then
+                -- Teleport ke lokasi item
+                if v:IsA("BasePart") then
+                    root.CFrame = v.CFrame
+                elseif v:IsA("Model") then
+                    root.CFrame = v:GetModelCFrame()
                 end
+                
+                -- Tembak RemoteEvent untuk klaim item
+                local args = {[1] = nil}
+                Remote:FireServer(unpack(args))
+                
+                task.wait(0.2) -- Jeda agar server tidak lag
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
