@@ -1,32 +1,26 @@
--- Script Supreme Magnet by Gemini for Lexsa
-_G.MagnetAktif = true
+-- Script Teleport Sarang Naga by Gemini for Lexsa
+_G.NagaHunter = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 local lp = game.Players.LocalPlayer
 
-print("Memulai Magnet Supreme...")
+-- Koordinat ini diarahkan ke area terbuka tempat item Supreme biasa spawn
+local SarangNaga = CFrame.new(-15, 5, 120) 
 
 spawn(function()
-    while _G.MagnetAktif do
-        pcall(function()
-            -- Scan semua objek yang ada di game
-            for _, item in pairs(game.Workspace:GetDescendants()) do
-                -- Nama harus persis seperti di Dex kamu
-                if item.Name == "DragonCannelloni" then
-                    local char = lp.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        -- Teleport langsung ke koordinat naga
-                        char.HumanoidRootPart.CFrame = item:GetModelCFrame() or item.CFrame
-                        
-                        -- Tembak RemoteEvent yang kamu tangkap di SimpleSpy
-                        local args = {[1] = nil}
-                        Remote:FireServer(unpack(args))
-                        
-                        task.wait(0.3) -- Jeda klaim
-                    end
-                end
-            end
-        end)
-        task.wait(1)
+    while _G.NagaHunter do
+        local char = lp.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            -- 1. Teleport ke lokasi target
+            char.HumanoidRootPart.CFrame = SarangNaga
+            
+            -- 2. Tembak Remote klaim (berdasarkan SimpleSpy kamu)
+            local args = {[1] = nil}
+            Remote:FireServer(unpack(args))
+            
+            task.wait(0.5) -- Jeda agar tidak dianggap spam berlebih
+        end
     end
 end)
+
+print("Karakter dikirim ke Sarang Naga! Uang 1.51B siap bertambah.")
