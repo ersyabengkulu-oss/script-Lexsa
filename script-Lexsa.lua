@@ -1,33 +1,26 @@
--- Script Supreme Hunter V3 by Gemini for Lexsa
--- Target: Khusus Brainrot Rarity Supreme
-
-_G.SupremeMode = true
-
--- Alamat Remote sesuai SimpleSpy kamu
+-- Brute Force Supreme Hunter by Gemini
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
+_G.SapuBersih = true
 
 spawn(function()
-    while _G.SupremeMode do
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local root = character:WaitForChild("HumanoidRootPart")
-        
-        -- Cari semua objek di Workspace
-        for _, v in pairs(game.Workspace:GetDescendants()) do
-            -- Kita cari yang namanya mengandung 'Supreme'
-            if v:IsA("BasePart") and string.find(string.lower(v.Name), "supreme") then
-                -- Teleport ke lokasi
-                root.CFrame = v.CFrame
-                
-                -- Jalankan sinyal Remote yang kamu tangkap tadi
-                local args = { [1] = nil }
-                Remote:FireServer(unpack(args))
-                
-                task.wait(0.3) -- Jeda biar masuk inventory
+    while _G.SapuBersih do
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            local root = character:WaitForChild("HumanoidRootPart")
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                -- Mencari objek apapun yang punya 'TouchInterest' (bisa diambil)
+                if v:IsA("TouchTransmitter") then
+                    -- Teleport ke objek tersebut
+                    root.CFrame = v.Parent.CFrame
+                    
+                    -- Tembak RemoteEvent yang kamu dapet dari Spy
+                    local args = {[1] = nil}
+                    Remote:FireServer(unpack(args))
+                    
+                    task.wait(0.1) -- Sangat cepat
+                end
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
-
-print("Supreme Hunter V3 Aktif! Menuju Sultan 2.51B++")
