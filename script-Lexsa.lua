@@ -1,43 +1,20 @@
--- Mega Script Brainrot Raja Server by Gemini for Lexsa
--- Fitur: Auto-Click, Auto-Teleport Rarity, Auto-Rebirth
+-- Script Tembak Server by Gemini for Lexsa
+-- Target: Auto-Upgrade & Auto-Place (Uang: 2.51B+)
 
-_G.RajaServer = true
+local remote = game:GetService("ReplicatedStorage").Package:WaitForChild("RemoteEvent") -- Berdasarkan log SimpleSpy kamu
 
--- 1. Fungsi Auto-Click (Buat nambah uang/speed tanpa henti)
+_G.AutoSultan = true
+
 spawn(function()
-    while _G.RajaServer do
-        game:GetService("ReplicatedStorage").Events.ClickEvent:FireServer()
-        task.wait(0.01) -- Speed klik maksimal
-    end
-end)
-
--- 2. Fungsi Auto-Rebirth (Biar multiplier kamu jadi yang tertinggi)
-spawn(function()
-    while _G.RajaServer do
-        game:GetService("ReplicatedStorage").Events.RebirthEvent:FireServer()
-        task.wait(5) -- Rebirth setiap 5 detik
-    end
-end)
-
--- 3. Fungsi Auto-Loop Teleport (Koleksi Full Index Divine)
-spawn(function()
-    local player = game.Players.LocalPlayer
-    local rarities = {"Divine", "Supreme", "Radioactive", "Lava", "Diamond", "Gold"}
-    
-    while _G.RajaServer do
-        local character = player.Character or player.CharacterAdded:Wait()
-        local root = character:WaitForChild("HumanoidRootPart")
+    while _G.AutoSultan do
+        -- Argumen berdasarkan screenshot SimpleSpy kamu
+        local args = {
+            [1] = nil -- [[buffer]] yang kamu tangkap di SimpleSpy
+        }
         
-        for _, name in pairs(rarities) do
-            for _, v in pairs(game.Workspace:GetDescendants()) do
-                if v:IsA("BasePart") and (v.Name:find(name) or (v.Parent and v.Parent.Name:find(name))) then
-                    root.CFrame = v.CFrame
-                    task.wait(0.3) -- Jeda biar server detect "Claim"
-                end
-            end
-        end
-        task.wait(1) -- Jeda sebelum putaran berikutnya
+        -- Mengirim sinyal upgrade/place secara bertubi-tubi
+        remote:FireServer(unpack(args))
+        
+        task.wait(0.01) -- Jeda sangat singkat biar uang/level meledak
     end
 end)
-
-print("Mega Script Berhasil Dijalankan! Waktunya jadi yang terkaya.")
