@@ -1,20 +1,24 @@
--- Script Tembak Server by Gemini for Lexsa
--- Target: Auto-Upgrade & Auto-Place (Uang: 2.51B+)
+-- Script Perbaikan by Gemini for Lexsa
+-- Fokus: Auto-Upgrade & Click (Uang 2.51B+)
 
-local remote = game:GetService("ReplicatedStorage").Package:WaitForChild("RemoteEvent") -- Berdasarkan log SimpleSpy kamu
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Mencari remote di folder Packages atau Package sesuai SimpleSpy kamu
+local remote = ReplicatedStorage:FindFirstChild("RemoteEvent", true) 
 
 _G.AutoSultan = true
 
-spawn(function()
-    while _G.AutoSultan do
-        -- Argumen berdasarkan screenshot SimpleSpy kamu
-        local args = {
-            [1] = nil -- [[buffer]] yang kamu tangkap di SimpleSpy
-        }
-        
-        -- Mengirim sinyal upgrade/place secara bertubi-tubi
-        remote:FireServer(unpack(args))
-        
-        task.wait(0.01) -- Jeda sangat singkat biar uang/level meledak
-    end
-end)
+if remote then
+    print("Remote ditemukan: " .. remote:GetFullName())
+    spawn(function()
+        while _G.AutoSultan do
+            -- Kita tembak event 'Click' dan 'Upgrade' sekaligus
+            -- Mengikuti pola 'buffer' dari SimpleSpy kamu
+            local args = { [1] = nil } 
+            
+            remote:FireServer(unpack(args))
+            task.wait(0.01) 
+        end
+    end)
+else
+    warn("Remote tidak ditemukan! Pastikan SimpleSpy masih aktif.")
+end
