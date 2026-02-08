@@ -1,9 +1,8 @@
--- Script V13 Anti-Pepe by Gemini for Lexsa
+-- Script V14 Anti-Nyasar by Gemini for Lexsa
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local ToggleBtn = Instance.new("TextButton")
 
--- UI Setup
 ScreenGui.Parent = game.CoreGui
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -15,16 +14,16 @@ MainFrame.Draggable = true
 ToggleBtn.Parent = MainFrame
 ToggleBtn.Size = UDim2.new(1, -20, 1, -20)
 ToggleBtn.Position = UDim2.new(0, 10, 0, 10)
-ToggleBtn.Text = "COLLECTOR OFF"
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+ToggleBtn.Text = "ON"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
 
-_G.RainbowSavior = false
+_G.RainbowSavior = true
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 
 ToggleBtn.MouseButton1Click:Connect(function()
     _G.RainbowSavior = not _G.RainbowSavior
-    ToggleBtn.Text = _G.RainbowSavior and "COLLECTOR ON" or "COLLECTOR OFF"
+    ToggleBtn.Text = _G.RainbowSavior and "ON" or "OFF"
     ToggleBtn.BackgroundColor3 = _G.RainbowSavior and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
@@ -38,21 +37,16 @@ spawn(function()
                 for _, v in pairs(game.Workspace:GetDescendants()) do
                     if not _G.RainbowSavior then break end
                     
-                    -- 1. Cek apakah namanya DragonCannelloni
+                    -- FILTER LEBIH SADIS: Cek Nama + ParticleEmitter
                     if v.Name == "DragonCannelloni" and v:IsA("Model") then
-                        -- 2. CARI TOMBOL "Pick up"
-                        local prompt = v:FindFirstChildWhichIsA("ProximityPrompt", true)
-                        
-                        -- 3. JANGAN TELEPORT kalau itu NPC (Pepe gak punya prompt Pick up)
-                        if prompt and prompt.ActionText == "Pick up" then
-                            local targetRoot = v:FindFirstChild("HumanoidRootPart")
-                            if targetRoot then
-                                myRoot.CFrame = targetRoot.CFrame
-                                
-                                -- Tembak Remote (Nested Table)
+                        local hrp = v:FindFirstChild("HumanoidRootPart")
+                        -- Papan update/Pepe biasanya nggak punya ParticleEmitter di HRP-nya
+                        if hrp and hrp:FindFirstChildWhichIsA("ParticleEmitter", true) then
+                            local prompt = v:FindFirstChildWhichIsA("ProximityPrompt", true)
+                            
+                            if prompt and prompt.ActionText == "Pick up" then
+                                myRoot.CFrame = hrp.CFrame
                                 Remote:FireServer({[1] = {[1] = "DragonCannelloni"}})
-                                
-                                -- Paksa Klik
                                 fireproximityprompt(prompt)
                                 task.wait(0.2)
                             end
@@ -61,6 +55,6 @@ spawn(function()
                 end
             end
         end
-        task.wait(0.6)
+        task.wait(0.7)
     end
 end)
