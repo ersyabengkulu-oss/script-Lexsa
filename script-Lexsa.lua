@@ -1,10 +1,10 @@
--- Script Supreme Collector V6 by Gemini for Lexsa
-_G.FinalCollector = true
+-- Script Supreme Breaker V7 by Gemini for Lexsa
+_G.BreakerV7 = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 local lp = game.Players.LocalPlayer
 
-local RutePatroli = {
+local RuteLengkap = {
     Vector3.new(-1115, 62, -1195),
     Vector3.new(-1111, 62, 2465), 
     Vector3.new(-1112, 62, 2802),
@@ -13,38 +13,34 @@ local RutePatroli = {
 }
 
 spawn(function()
-    while _G.FinalCollector do
+    while _G.BreakerV7 do
         local char = lp.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if root then
-            for _, pos in pairs(RutePatroli) do
-                root.CFrame = CFrame.new(pos)
-                task.wait(0.4)
-                
-                -- Mencari objek DragonCannelloni secara mendalam
-                for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if v.Name == "DragonCannelloni" then
-                        -- Ambil posisi objek (baik Model atau Part)
-                        local targetPos = v:IsA("Model") and v:GetModelCFrame().p or (v:IsA("BasePart") and v.Position)
+            for _, titik in pairs(RuteLengkap) do
+                for _, obj in pairs(game.Workspace:GetDescendants()) do
+                    if obj.Name == "DragonCannelloni" then
+                        local objPos = obj:IsA("Model") and obj:GetModelCFrame().p or obj.Position
                         
-                        if targetPos and (targetPos - root.Position).Magnitude < 70 then
-                            -- 1. Pindah TEPAT ke posisi item
-                            root.CFrame = CFrame.new(targetPos)
+                        if (objPos - titik).Magnitude < 65 then
+                            -- 1. Tempelkan karakter tepat di item
+                            root.CFrame = CFrame.new(objPos)
                             
-                            -- 2. Kirim sinyal ambil (Sesuai log SimpleSpy paling baru)
-                            -- Kita coba kirim String dan Tabel sekaligus jika salah satu gagal
-                            Remote:FireServer("DragonCannelloni") 
-                            task.wait(0.1)
-                            Remote:FireServer({[1] = "DragonCannelloni"})
-                            
-                            -- 3. Hapus item secara lokal (Biar tidak nge-lag/stuck di layar)
-                            -- v:Destroy() -- Opsional: Hilangkan ini jika ingin melihat itemnya hilang secara server
+                            -- 2. Tembak Remote dengan NESTED TABLE
+                            local args = {
+                                [1] = {
+                                    [1] = "DragonCannelloni"
+                                }
+                            }
+                            Remote:FireServer(unpack(args))
                             
                             task.wait(0.2)
                         end
                     end
                 end
+                root.CFrame = CFrame.new(titik)
+                task.wait(0.5)
             end
         end
         task.wait(0.5)
