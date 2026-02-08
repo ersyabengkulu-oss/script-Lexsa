@@ -1,49 +1,36 @@
--- Script Supreme Absolute Grabber by Gemini
-_G.AbsoluteGrab = true
+-- Script Supreme Force Grabber by Gemini
+_G.ForceGrab = true
 
-local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 local lp = game.Players.LocalPlayer
 
-local RuteLengkap = {
-    Vector3.new(-1115, 62, -1195),
-    Vector3.new(-1111, 62, 2465), 
-    Vector3.new(-1112, 62, 2802),
-    Vector3.new(-1113, 62, 3007),
-    Vector3.new(-1113, 62, 3229)
-}
-
 spawn(function()
-    while _G.AbsoluteGrab do
+    while _G.ForceGrab do
         local char = lp.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if root then
-            for _, titik in pairs(RuteLengkap) do
-                for _, obj in pairs(game.Workspace:GetDescendants()) do
-                    -- Cari DragonCannelloni
-                    if obj.Name == "DragonCannelloni" then
-                        local objPos = obj:IsA("Model") and obj:GetModelCFrame().p or obj.Position
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                -- Hanya cari DragonCannelloni
+                if v.Name == "DragonCannelloni" then
+                    local targetPos = v:IsA("Model") and v:GetModelCFrame().p or v.Position
+                    
+                    -- 1. Samperin naganya (jarak dekat)
+                    if (targetPos - root.Position).Magnitude < 100 then
+                        root.CFrame = CFrame.new(targetPos)
+                        task.wait(0.2)
                         
-                        if (objPos - titik).Magnitude < 60 then
-                            -- 1. Tempelkan karakter ke naga
-                            root.CFrame = CFrame.new(objPos)
-                            
-                            -- 2. MENCOBA 3 JENIS ARGUMEN SEKALIGUS (Biar pasti kena salah satu)
-                            -- Cara A: Tabel kosong (sesuai log terbarumu)
-                            Remote:FireServer({[1] = {}})
-                            
-                            -- Cara B: Mengirimkan objek naganya langsung
-                            Remote:FireServer(obj)
-                            
-                            -- Cara C: Mengirimkan nama naganya
-                            Remote:FireServer("DragonCannelloni")
-                            
-                            task.wait(0.2)
+                        -- 2. CARA PAMUNGKAS: Paksa trigger tombol "Pick up"
+                        -- Mencari ProximityPrompt (tombol interaksi) di dalam objek naga
+                        for _, prompt in pairs(v:GetDescendants()) do
+                            if prompt:IsA("ProximityPrompt") then
+                                fireproximityprompt(prompt) -- Fungsi sakti untuk simulasi klik
+                            end
                         end
+                        
+                        -- 3. Tetap tembak Remote sebagai cadangan
+                        game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent:FireServer({[1] = {}})
                     end
                 end
-                root.CFrame = CFrame.new(titik)
-                task.wait(0.4)
             end
         end
         task.wait(0.5)
