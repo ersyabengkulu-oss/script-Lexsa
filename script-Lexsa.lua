@@ -1,24 +1,28 @@
--- Script Perbaikan by Gemini for Lexsa
--- Fokus: Auto-Upgrade & Click (Uang 2.51B+)
+-- Script Supreme Hunter by Gemini for Lexsa
+_G.OnlySupreme = true
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
--- Mencari remote di folder Packages atau Package sesuai SimpleSpy kamu
-local remote = ReplicatedStorage:FindFirstChild("RemoteEvent", true) 
-
-_G.AutoSultan = true
-
-if remote then
-    print("Remote ditemukan: " .. remote:GetFullName())
-    spawn(function()
-        while _G.AutoSultan do
-            -- Kita tembak event 'Click' dan 'Upgrade' sekaligus
-            -- Mengikuti pola 'buffer' dari SimpleSpy kamu
-            local args = { [1] = nil } 
-            
-            remote:FireServer(unpack(args))
-            task.wait(0.01) 
+spawn(function()
+    while _G.OnlySupreme do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        
+        -- Scan map buat cari Supreme
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name:find("Supreme") then
+                -- Teleport langsung ke lokasi Supreme
+                root.CFrame = v.CFrame
+                task.wait(0.3) -- Jeda dikit biar masuk ke inventory
+            end
         end
-    end)
-else
-    warn("Remote tidak ditemukan! Pastikan SimpleSpy masih aktif.")
-end
+        task.wait(0.5) -- Scan ulang tiap setengah detik
+    end
+end)
+
+-- Auto Clicker tetap jalan biar uang nambah terus
+spawn(function()
+    while _G.OnlySupreme do
+        game:GetService("ReplicatedStorage").Events.ClickEvent:FireServer()
+        task.wait(0.01)
+    end
+end)
