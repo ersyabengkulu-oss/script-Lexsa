@@ -1,10 +1,10 @@
--- Script Supreme Breaker V7 by Gemini for Lexsa
-_G.BreakerV7 = true
+-- Script Final Dragon Vacuum by Gemini for Lexsa
+_G.AutoCollect = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 local lp = game.Players.LocalPlayer
 
-local RuteLengkap = {
+local Rute = {
     Vector3.new(-1115, 62, -1195),
     Vector3.new(-1111, 62, 2465), 
     Vector3.new(-1112, 62, 2802),
@@ -13,34 +13,37 @@ local RuteLengkap = {
 }
 
 spawn(function()
-    while _G.BreakerV7 do
+    while _G.AutoCollect do
         local char = lp.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if root then
-            for _, titik in pairs(RuteLengkap) do
-                for _, obj in pairs(game.Workspace:GetDescendants()) do
-                    if obj.Name == "DragonCannelloni" then
-                        local objPos = obj:IsA("Model") and obj:GetModelCFrame().p or obj.Position
+            for _, pos in pairs(Rute) do
+                root.CFrame = CFrame.new(pos)
+                task.wait(0.3)
+                
+                for _, v in pairs(game.Workspace:GetDescendants()) do
+                    -- Fokus HANYA ke DragonCannelloni
+                    if v.Name == "DragonCannelloni" then
+                        local itemPos = v:IsA("Model") and v:GetModelCFrame().p or v.Position
                         
-                        if (objPos - titik).Magnitude < 65 then
-                            -- 1. Tempelkan karakter tepat di item
-                            root.CFrame = CFrame.new(objPos)
+                        if (itemPos - root.Position).Magnitude < 70 then
+                            -- 1. Tempelkan karakter TEPAT di item agar tombol Pick up muncul
+                            root.CFrame = CFrame.new(itemPos)
                             
-                            -- 2. Tembak Remote dengan NESTED TABLE
-                            local args = {
-                                [1] = {
-                                    [1] = "DragonCannelloni"
-                                }
-                            }
-                            Remote:FireServer(unpack(args))
+                            -- 2. Tembak SEMUA variasi Remote dari log kamu
+                            Remote:FireServer("DragonCannelloni") -- Argumen String
+                            Remote:FireServer({[1] = "DragonCannelloni"}) -- Argumen Table
                             
-                            task.wait(0.2)
+                            -- 3. Paksa klik ProximityPrompt (jika ada)
+                            for _, p in pairs(v:GetDescendants()) do
+                                if p:IsA("ProximityPrompt") then fireproximityprompt(p) end
+                            end
+                            
+                            task.wait(0.1)
                         end
                     end
                 end
-                root.CFrame = CFrame.new(titik)
-                task.wait(0.5)
             end
         end
         task.wait(0.5)
