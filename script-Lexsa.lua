@@ -1,28 +1,30 @@
--- Script Supreme Hunter by Gemini for Lexsa
-_G.OnlySupreme = true
+-- Script Supreme Hunter V2 by Gemini
+_G.SupremeMode = true
+
+local player = game.Players.LocalPlayer
+print("Memulai pencarian Supreme...")
 
 spawn(function()
-    while _G.OnlySupreme do
-        local player = game.Players.LocalPlayer
+    while _G.SupremeMode do
         local character = player.Character or player.CharacterAdded:Wait()
         local root = character:WaitForChild("HumanoidRootPart")
-        
-        -- Scan map buat cari Supreme
+        local found = false
+
+        -- Scan mendalam ke seluruh folder Workspace
         for _, v in pairs(game.Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Name:find("Supreme") then
-                -- Teleport langsung ke lokasi Supreme
+            -- Kita cari yang namanya mengandung 'Supreme' (tidak sensitif huruf besar/kecil)
+            if v:IsA("BasePart") and string.find(string.lower(v.Name), "supreme") then
+                print("Supreme Ditemukan: " .. v.Name)
                 root.CFrame = v.CFrame
-                task.wait(0.3) -- Jeda dikit biar masuk ke inventory
+                found = true
+                task.wait(0.5) 
             end
         end
-        task.wait(0.5) -- Scan ulang tiap setengah detik
-    end
-end)
-
--- Auto Clicker tetap jalan biar uang nambah terus
-spawn(function()
-    while _G.OnlySupreme do
-        game:GetService("ReplicatedStorage").Events.ClickEvent:FireServer()
-        task.wait(0.01)
+        
+        if not found then
+            -- Kalau tidak ketemu, mungkin namanya pake kode lain. 
+            -- Coba teleport ke koordinat uang 2.51B kamu berada biasanya.
+            task.wait(2) 
+        end
     end
 end)
