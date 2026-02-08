@@ -1,54 +1,38 @@
--- Script Supreme God Mode by Gemini for Lexsa
-_G.GodCollect = true
+-- Script Supreme Magnet V8 by Gemini for Lexsa
+_G.MagnetAktif = true
 
 local Remote = game:GetService("ReplicatedStorage").Packages.Packets.PacketModule.RemoteEvent
 local lp = game.Players.LocalPlayer
 
-local Rute = {
-    Vector3.new(-1115, 62, -1195),
-    Vector3.new(-1111, 62, 2465), 
-    Vector3.new(-1112, 62, 2802),
-    Vector3.new(-1113, 62, 3007),
-    Vector3.new(-1113, 62, 3229)
-}
-
 spawn(function()
-    while _G.GodCollect do
+    while _G.MagnetAktif do
         local char = lp.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if root then
-            for _, pos in pairs(Rute) do
-                root.CFrame = CFrame.new(pos)
-                task.wait(0.3)
-                
-                for _, v in pairs(game.Workspace:GetDescendants()) do
-                    if v.Name == "DragonCannelloni" then
-                        local itemPos = v:IsA("Model") and v:GetModelCFrame().p or v.Position
-                        
-                        if (itemPos - root.Position).Magnitude < 80 then
-                            -- 1. GESEKAN FISIK: Maju mundur dikit biar TouchInterest ke-trigger
-                            root.CFrame = CFrame.new(itemPos) * CFrame.new(0, 0, 1)
-                            task.wait(0.05)
-                            root.CFrame = CFrame.new(itemPos)
-                            
-                            -- 2. BOMBARDIR REMOTE (Dua jenis argumen sekaligus!)
-                            -- Tipe A: Nested Table
-                            Remote:FireServer({[1] = "DragonCannelloni"}) 
-                            
-                            -- Tipe B: String Langsung
-                            Remote:FireServer("DragonCannelloni")
-                            
-                            -- 3. Trigger ProximityPrompt secara paksa
-                            for _, p in pairs(v:GetDescendants()) do
-                                if p:IsA("ProximityPrompt") then fireproximityprompt(p) end
-                            end
-                            task.wait(0.1)
+            -- Cari semua objek bernama DragonCannelloni di seluruh Workspace
+            for _, item in pairs(game.Workspace:GetDescendants()) do
+                if item.Name == "DragonCannelloni" then
+                    -- Pastikan item punya posisi fisik
+                    local itemPos = item:IsA("Model") and item:GetModelCFrame().p or (item:IsA("BasePart") and item.Position)
+                    
+                    if itemPos then
+                        -- 1. BAWA NAGA KE KARAKTER (Biar Magnitude-nya 0)
+                        if item:IsA("Model") then
+                            item:SetPrimaryPartCFrame(root.CFrame)
+                        elseif item:IsA("BasePart") then
+                            item.CFrame = root.CFrame
                         end
+                        
+                        -- 2. TEMBAK REMOTE DENGAN KUNCI DOUBLE TABLE
+                        Remote:FireServer({[1] = {[1] = "DragonCannelloni"}})
+                        
+                        -- 3. JEDA SUPER SINGKAT
+                        task.wait(0.05)
                     end
                 end
             end
         end
-        task.wait(0.4)
+        task.wait(0.5) -- Scan ulang tiap setengah detik
     end
 end)
