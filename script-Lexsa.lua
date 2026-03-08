@@ -1,41 +1,41 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Dit Waypoint Tool", "DarkTheme")
+local Window = Library.CreateLib("Lexsa Multi-Waypoints", "DarkTheme")
 
 local Tab = Window:NewTab("Waypoints")
-local Section = Tab:NewSection("Slot Koordinat")
+local Section = Tab:NewSection("Slot Koordinat (1-5)")
 
--- Variabel buat nyimpen lokasi
-local Pos1, Pos2, Pos3 = nil, nil, nil
+-- Penyimpanan Koordinat
+local Positions = {}
 
--- SLOT 1
-Section:NewButton("Set Pos 1 (Celah)", "Simpan titik aman saat ini", function()
-    Pos1 = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-    print("Slot 1 Tersimpan!")
-end)
+-- Fungsi buat bikin tombol otomatis biar gak panjang kodingannya
+local function CreateWaypoint(slotName, slotIndex)
+    Section:NewButton("Set Pos "..slotIndex.." ("..slotName..")", "Simpan posisi ke slot "..slotIndex, function()
+        Positions[slotIndex] = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        Library:Notify("Lexsa Tool", "Slot "..slotIndex.." Berhasil Disimpan!", 3)
+    end)
 
-Section:NewButton("Go To 1", "Teleport balik ke Slot 1", function()
-    if Pos1 then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Pos1
-    else
-        warn("Slot 1 Kosong!")
-    end
-end)
+    Section:NewButton("Teleport ke Slot "..slotIndex, "Balik ke posisi "..slotIndex, function()
+        if Positions[slotIndex] then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Positions[slotIndex]
+        else
+            Library:Notify("Peringatan", "Slot "..slotIndex.." belum diisi, Dit!", 3)
+        end
+    end)
+    Section:NewLine()
+end
 
-Section:NewLine()
+-- Bikin 5 Slot Otomatis
+for i = 1, 5 do
+    CreateWaypoint("Slot "..i, i)
+end
 
--- SLOT 2
-Section:NewButton("Set Pos 2", "Simpan titik kedua", function()
-    Pos2 = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-    print("Slot 2 Tersimpan!")
-end)
-
-Section:NewButton("Go To 2", "Teleport balik ke Slot 2", function()
-    if Pos2 then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Pos2
-    end
-end)
-
-Section:NewSection("Extra")
-Section:NewButton("Refresh Character", "Reset karakter kalau stuck", function()
-    game.Players.LocalPlayer.Character:BreakJoints()
+Section:NewSection("Sobat Ronda Menu")
+Section:NewButton("Anti-AFK", "Biar gak ke-kick pas farm", function()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:connect(function()
+        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+    Library:Notify("Lexsa Tool", "Anti-AFK Aktif!", 3)
 end)
