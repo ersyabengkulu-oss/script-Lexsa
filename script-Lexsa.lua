@@ -1,36 +1,61 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
--- Bikin Window dengan posisi di tengah layar
-local Window = Library.CreateLib("Lexsa Multi-Waypoints", "DarkTheme")
+-- Script Waypoint Simpel by Lexsa
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+local MainFrame = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
 
--- Tab khusus buat simpan koordinat
-local TabSet = Window:NewTab("SET POSISI")
-local SetSection = TabSet:NewSection("Pencet buat simpan titik aman")
+-- Setup Parent
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "LexsaToggle"
 
--- Tab khusus buat pindah tempat
-local TabGo = Window:NewTab("TELEPORT")
-local GoSection = TabGo:NewSection("Pencet buat balik ke titik tadi")
+-- 1. Tombol Toggle (Bulat Kecil buat Buka/Tutup)
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Warna Merah biar keliatan
+ToggleButton.Position = UDim2.new(0, 10, 0.4, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Text = "OPEN"
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+ToggleButton.Draggable = true -- Bisa kamu geser-geser biar gak ngalangin
+
+-- 2. Frame Utama (Menu Tengah)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.5, -75, 0.5, -100)
+MainFrame.Size = UDim2.new(0, 150, 0, 250)
+MainFrame.Visible = false -- Awalnya sembunyi
+
+UIListLayout.Parent = MainFrame
+UIListLayout.Padding =信号 (0, 5)
+
+-- Fungsi Buka Tutup
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    ToggleButton.Text = MainFrame.Visible and "CLOSE" or "OPEN"
+end)
 
 local Positions = {}
 
--- Bikin 5 Slot otomatis biar rapi
+-- 3. Bikin 5 Tombol Set & Tele
 for i = 1, 5 do
-    SetSection:NewButton("Simpan Titik Slot "..i, "Tandai tempat ini", function()
+    local SetBtn = Instance.new("TextButton", MainFrame)
+    SetBtn.Size = UDim2.new(1, 0, 0, 20)
+    SetBtn.Text = "SET " .. i
+    SetBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    
+    local GoBtn = Instance.new("TextButton", MainFrame)
+    GoBtn.Size = UDim2.new(1, 0, 0, 20)
+    GoBtn.Text = "GO " .. i
+    GoBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 150)
+
+    SetBtn.MouseButton1Click:Connect(function()
         Positions[i] = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-        Library:Notify("Lexsa Info", "Slot "..i.." Berhasil Disimpan!", 2)
     end)
 
-    GoSection:NewButton("Balik ke Slot "..i, "Teleport sekarang", function()
+    GoBtn.MouseButton1Click:Connect(function()
         if Positions[i] then
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Positions[i]
-        else
-            Library:Notify("Gagal", "Simpan posisi dulu di tab SET!", 2)
         end
     end)
 end
-
--- Tab buat buka tutup GUI
-local TabTutup = Window:NewTab("TUTUP")
-local TutupSection = TabTutup:NewSection("Klik 'Sembunyikan' buat hide menu")
-TutupSection:NewKeybind("Sembunyikan Menu", "Pencet P atau klik toggle", Enum.KeyCode.P, function()
-    Library:ToggleLib()
-end)
