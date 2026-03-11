@@ -1,36 +1,25 @@
--- AUTO UPGRADE - SESUAI KODE SIMPLESPY
+-- VERSI ALTERNATIF - JIKA VERSI PERTAMA TIDAK BERJALAN
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UpgradeRemote = ReplicatedStorage.Packages.Packets.PacketModule.RemoteEvent
 
--- Lokasi Remote Event yang ditemukan
-local UpgradeRemote = ReplicatedStorage:FindFirstChild("Packages")
-if UpgradeRemote then
-    UpgradeRemote = UpgradeRemote:FindFirstChild("Packets")
-    if UpgradeRemote then
-        UpgradeRemote = UpgradeRemote:FindFirstChild("PacketModule")
-        if UpgradeRemote then
-            UpgradeRemote = UpgradeRemote:FindFirstChild("RemoteEvent")
-        end
-    end
+-- Coba kirim dengan beberapa variasi args
+local possibleArgs = {
+    nil,
+    "",
+    0,
+    {}
+}
+
+print("Mencoba berbagai variasi args...")
+for _, arg in pairs(possibleArgs) do
+    local args = {[1] = arg}
+    UpgradeRemote:FireServer(unpack(args))
+    print("Dikirim dengan arg:", arg)
+    task.wait(2)
 end
 
--- Cek apakah remote ditemukan
-if not UpgradeRemote or not UpgradeRemote:IsA("RemoteEvent") then
-    warn("Remote Event tidak ditemukan! Pastikan lokasinya benar.")
-else
-    print("Auto Upgrade aktif!")
-    
-    -- Fungsi untuk menjalankan upgrade
-    local function runUpgrade()
-        local args = {
-            [1] = nil --[[buffer]] -- Sama seperti yang ada di SimpleSpy
-        }
-        -- Jalankan remote call
-        UpgradeRemote:FireServer(unpack(args))
-    end
-
-    -- Jalankan setiap 3-5 detik (sesuaikan aja)
-    while task.wait(4) do
-        runUpgrade()
-        print("Upgrade dipanggil! Cek apakah ada perubahan di game.")
-    end
+-- Setelah menemukan arg yang bekerja, gunakan di loop
+while task.wait(5) do
+    UpgradeRemote:FireServer(nil) -- Ganti nil dengan arg yang berhasil
+    print("Auto Upgrade berjalan...")
 end
