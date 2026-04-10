@@ -1,57 +1,35 @@
--- KODE INI HANYA UNTUK PELAJARAN LOGIKA, BUKAN UNTUK SCRIPT JADI --
+-- LEXSA (4663) PROJECT - RESEARCH ONLY
+-- Purpose: Game Analysis & Bug Testing
 
--- 1. Servis yang Dibutuhkan
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("LEXSA RESEARCH HUB", "DarkScene")
 
--- 2. Variabel Penting
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
-local isAiming = false -- Status apakah tombol aim ditekan
+-- Tab Utama: Informasi
+local Tab1 = Window:NewTab("Status")
+local Section1 = Tab1:NewSection("Research In Progress")
 
--- 3. Fungsi Mencari Musuh Terdekat
-local function GetClosestPlayer()
-    local target = nil
-    local shortestDistance = math.huge -- Setel jarak awal tak terhingga
+Section1:NewLabel("Current Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+Section1:NewLabel("Dev Status: Beta Testing")
 
-    -- Loop semua player di game
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid").Health > 0 then
-            -- Hitung jarak dari karakter lo ke karakter musuh (pake Vector3)
-            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            
-            -- Kalau jaraknya paling deket, jadikan target
-            if distance < shortestDistance then
-                target = player
-                shortestDistance = distance
-            end
-        end
-    end
-    return target
-end
+-- Tab Fitur (Bukti Logika Work)
+local Tab2 = Window:NewTab("Tools")
+local Section2 = Tab2:NewSection("Detection Tools")
 
--- 4. Fungsi Mengarahkan Kamera (Logic Utama)
-RunService.RenderStepped:Connect(function()
-    if isAiming then
-        local targetPlayer = GetClosestPlayer() -- Cari musuh terdekat
-        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
-            -- INI INTI AUTO AIM: Paksa kamera melihat ke koordinat Kepala Musuh
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
+Section2:NewButton("Print Remote Events", "Scanning for bugs...", function()
+    print("LEXSA SCANNER: Scanning for active remotes...")
+    -- Di sini lo pamer lo paham RemoteEvent
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("RemoteEvent") then
+            print("Found Remote: " .. v.Name)
         end
     end
 end)
 
--- 5. Fungsi Mendeteksi Tombol (Misal: Tahan Tombol E)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.E then
-        isAiming = true
-    end
+Section2:NewSlider("Walkspeed Test", "Testing Character Physics", 500, 16, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.E then
-        isAiming = false
-    end
-end)
+-- Tab Credit
+local Tab3 = Window:NewTab("Credits")
+Tab3:NewSection("Developer: LEXSA (4663)")
+Tab3:NewSection("Portfolio: github.com/ersyabengkulu-oss")
