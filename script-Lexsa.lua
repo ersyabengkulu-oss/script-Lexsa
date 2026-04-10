@@ -1,22 +1,23 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+-- LEXSA (4663) PROJECT - RESEARCH ONLY
+-- Purpose: Game Analysis & Bug Testing
 
--- GANTI KE DarkTheme
-local Window = Library.CreateLib("LEXSA RESEARCH HUB", "DarkTheme")
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("LEXSA RESEARCH HUB", "DarkScene")
 
 -- Tab Utama: Informasi
 local Tab1 = Window:NewTab("Status")
 local Section1 = Tab1:NewSection("Research In Progress")
 
--- Ganti NewLabel jadi NewButton (karena NewLabel gak exist di Kavo ini)
-Section1:NewButton("Current Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, "", function() end)
-Section1:NewButton("Dev Status: Beta Testing", "", function() end)
+Section1:NewLabel("Current Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+Section1:NewLabel("Dev Status: Beta Testing")
 
--- Tab Fitur
+-- Tab Fitur (Bukti Logika Work)
 local Tab2 = Window:NewTab("Tools")
 local Section2 = Tab2:NewSection("Detection Tools")
 
 Section2:NewButton("Print Remote Events", "Scanning for bugs...", function()
     print("LEXSA SCANNER: Scanning for active remotes...")
+    -- Di sini lo pamer lo paham RemoteEvent
     for _, v in pairs(game:GetDescendants()) do
         if v:IsA("RemoteEvent") then
             print("Found Remote: " .. v.Name)
@@ -30,5 +31,5 @@ end)
 
 -- Tab Credit
 local Tab3 = Window:NewTab("Credits")
-local Section3 = Tab3:NewSection("Developer: LEXSA (4663)")
-Section3:NewButton("Portfolio: github.com/ersyabengkulu-oss", "", function() end)
+Tab3:NewSection("Developer: LEXSA (4663)")
+Tab3:NewSection("Portfolio: github.com/ersyabengkulu-oss")
