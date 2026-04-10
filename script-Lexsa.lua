@@ -1,35 +1,48 @@
--- LEXSA (4663) PROJECT - RESEARCH ONLY
--- Purpose: Game Analysis & Bug Testing
-
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("LEXSA RESEARCH HUB", "DarkScene")
+local Window = Library.CreateLib("LEXSA ANALYST & COMBAT", "DarkScene")
 
--- Tab Utama: Informasi
-local Tab1 = Window:NewTab("Status")
-local Section1 = Tab1:NewSection("Research In Progress")
+-- TAB 1: ANALYST (Buat Portofolio Bug Hunter)
+local Tab1 = Window:NewTab("Analyst")
+local Sec1 = Tab1:NewSection("Bug Hunting Tools")
 
-Section1:NewLabel("Current Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-Section1:NewLabel("Dev Status: Beta Testing")
-
--- Tab Fitur (Bukti Logika Work)
-local Tab2 = Window:NewTab("Tools")
-local Section2 = Tab2:NewSection("Detection Tools")
-
-Section2:NewButton("Print Remote Events", "Scanning for bugs...", function()
-    print("LEXSA SCANNER: Scanning for active remotes...")
-    -- Di sini lo pamer lo paham RemoteEvent
+Sec1:NewButton("Scan Remote Events", "Cek celah keamanan", function()
     for _, v in pairs(game:GetDescendants()) do
         if v:IsA("RemoteEvent") then
-            print("Found Remote: " .. v.Name)
+            print("Found: " .. v.Name .. " | Path: " .. v:GetFullName())
         end
     end
 end)
 
-Section2:NewSlider("Walkspeed Test", "Testing Character Physics", 500, 16, function(s)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+-- TAB 2: COMBAT (Buat Pamer Fungsi Work)
+local Tab2 = Window:NewTab("Combat")
+local Sec2 = Tab2:NewSection("Auto Aim & ESP")
+
+Sec2:NewToggle("Enable ESP", "Liat musuh tembus tembok", function(state)
+    _G.ESP = state
+    while _G.ESP do
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v.Name ~= game.Players.LocalPlayer.Name and v.Character and not v.Character:FindFirstChild("Highlight") then
+                local hl = Instance.new("Highlight", v.Character)
+                hl.FillColor = Color3.fromRGB(255, 0, 0)
+            end
+        end
+        wait(1)
+        if not _G.ESP then 
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v.Character and v.Character:FindFirstChild("Highlight") then v.Character.Highlight:Destroy() end
+            end
+        end
+    end
 end)
 
--- Tab Credit
-local Tab3 = Window:NewTab("Credits")
-Tab3:NewSection("Developer: LEXSA (4663)")
-Tab3:NewSection("Portfolio: github.com/ersyabengkulu-oss")
+Sec2:NewButton("Trigger Auto Aim", "Kunci target terdekat", function()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (v.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d target = v end
+        end
+    end
+    if target then workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position) end
+end)
