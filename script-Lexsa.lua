@@ -1,43 +1,3 @@
--- LEXSA SIMPLE TOOLS
-local p = game.Players.LocalPlayer
-local sg = Instance.new("ScreenGui", p.PlayerGui)
-sg.Name = "LexsaHub"
-sg.ResetOnSpawn = false -- Biar gak ilang pas respawn
-
-local f = Instance.new("Frame", sg)
-f.Size = UDim2.new(0, 150, 0, 180)
-f.Position = UDim2.new(0.5, -75, 0.5, -90)
-f.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-f.Active = true
-f.Draggable = true
-f.BorderSizePixel = 0 -- Biar pinggirannya rapi
-
-local t = Instance.new("TextLabel", f)
-t.Size = UDim2.new(1, 0, 0, 30)
-t.Text = "LEXSA (4663)"
-t.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-t.TextColor3 = Color3.fromRGB(255,255,255) -- Pake fromRGB biar aman
-t.Font = Enum.Font.GothamBold
-t.TextSize = 14
-
--- FUNGSI SCAN (CEK DI F9)
-local b1 = Instance.new("TextButton", f)
-b1.Size = UDim2.new(0.9, 0, 0, 40)
-b1.Position = UDim2.new(0.05, 0, 0.25, 0)
-b1.Text = "SCAN BUG"
-b1.BackgroundColor3 = Color3.fromRGB(50,50,50)
-b1.TextColor3 = Color3.fromRGB(255,255,255)
-b1.BorderSizePixel = 0
-
-b1.MouseButton1Click:Connect(function()
-    print("--- SCANNING ---")
-    for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("RemoteEvent") then 
-            print("Found: " .. v.Name) 
-        end
-    end
-end)
-
 -- FUNGSI ESP
 local b2 = Instance.new("TextButton", f)
 b2.Size = UDim2.new(0.9, 0, 0, 40)
@@ -47,16 +7,48 @@ b2.BackgroundColor3 = Color3.fromRGB(50,50,50)
 b2.TextColor3 = Color3.fromRGB(255,255,255)
 b2.BorderSizePixel = 0
 
+local ESP_Enabled = false -- Status nyala/mati
+local ESP_Loop = nil -- Variabel buat nampung loop
+
 b2.MouseButton1Click:Connect(function()
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= p and v.Character then
-            local h = Instance.new("Highlight")
-            h.Parent = v.Character
-            h.FillColor3 = Color3.fromRGB(255, 0, 0) -- Merah
-            h.OutlineColor3 = Color3.fromRGB(255, 255, 255)
-            h.Enabled = true
-            h.Adornee = v.Character
+    ESP_Enabled = not ESP_Enabled -- Toggle on/off
+    
+    if ESP_Enabled then
+        b2.Text = "ESP: ON"
+        print("ESP AKTIF - Memantau semua player...")
+        
+        -- Looping terus menerus buat cek player
+        ESP_Loop = game:GetService("RunService").Heartbeat:Connect(function()
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= p and v.Character then -- Kalau bukan diri sendiri dan ada karakternya
+                    
+                    -- Cek dulu udah ada Highlight belum, biar gak numpuk
+                    if not v.Character:FindFirstChild("LexsaESP") then
+                        local h = Instance.new("Highlight")
+                        h.Name = "LexsaESP" -- Kasih nama biar gampang dicari
+                        h.Parent = v.Character
+                        h.FillColor3 = Color3.fromRGB(255, 0, 0)
+                        h.OutlineColor3 = Color3.fromRGB(255, 255, 255)
+                        h.FillTransparency = 0.5 -- Biar kelihatan dalemnya
+                        h.OutlineTransparency = 0
+                        h.Enabled = true
+                    end
+                end
+            end
+        end)
+        
+    else
+        b2.Text = "ESP MUSUH"
+        print("ESP MATI")
+        
+        -- Matikan loop
+        if ESP_Loop then ESP_Loop:Disconnect() end
+        
+        -- Hapus semua highlight
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v.Character and v.Character:FindFirstChild("LexsaESP") then
+                v.Character.LexsaESP:Destroy()
+            end
         end
     end
-    print("ESP Aktif!")
 end)
