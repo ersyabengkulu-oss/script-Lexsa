@@ -1,7 +1,9 @@
--- LEXSA (4663) - PROTOCOL V5 (MINIMIZABLE) - FIXED
+-- LEXSA V5 - FIX TOTAL (PASTI MUNCUL)
 local p = game.Players.LocalPlayer
 local sg = Instance.new("ScreenGui", p.PlayerGui)
 sg.Name = "LexsaV5"
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- WAJIB INI BIAR GAK KETUTUP
+sg.ResetOnSpawn = false -- BIAR GAK HILANG KALO RESPAWN
 
 -- TOMBOL BUKA/TUTUP
 local OpenBtn = Instance.new("TextButton", sg)
@@ -10,7 +12,7 @@ OpenBtn.Position = UDim2.new(0, 10, 0, 10)
 OpenBtn.Text = "LEXSA"
 OpenBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
 OpenBtn.TextColor3 = Color3.new(1, 1, 1)
-OpenBtn.ZIndexBehavior = Enum.ZIndexBehavior.Global -- Tambahan biar aman
+OpenBtn.ZIndex = 10
 
 local f = Instance.new("Frame", sg)
 f.Size = UDim2.new(0, 220, 0, 360)
@@ -19,8 +21,8 @@ f.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 f.Visible = false
 f.Active = true
 f.Draggable = true
+f.ZIndex = 5
 
--- Fungsi Buka Tutup
 OpenBtn.MouseButton1Click:Connect(function()
     f.Visible = not f.Visible
 end)
@@ -33,7 +35,7 @@ t.TextColor3 = Color3.new(1, 1, 1)
 
 local slots = {nil, nil, nil, nil, nil}
 
--- FUNGSI: Bikin Tombol Slot (SUDAH DI FIX POSISINYA)
+-- FUNGSI CREATE SLOT (PASTI MUNCUL DI DALAM FRAME)
 local function createSlot(id, yPos)
     local set = Instance.new("TextButton", f)
     set.Size = UDim2.new(0.4, 0, 0, 30)
@@ -50,44 +52,46 @@ local function createSlot(id, yPos)
     go.TextColor3 = Color3.new(1, 1, 1)
 
     set.MouseButton1Click:Connect(function()
-        slots[id] = p.Character.HumanoidRootPart.CFrame
-        set.Text = "SAVED"
-        task.wait(0.5)
-        set.Text = "SET S"..id
+        if p.Character then
+            slots[id] = p.Character.HumanoidRootPart.CFrame
+            set.Text = "SAVED!"
+            task.wait(0.3)
+            set.Text = "SET S"..id
+        end
     end)
 
     go.MouseButton1Click:Connect(function()
-        if slots[id] and p.Character then -- Tambah pengecekan Character biar ga error
+        if slots[id] and p.Character then
             p.Character.HumanoidRootPart.CFrame = slots[id]
         end
     end)
 end
 
--- Bikin 5 Slot (INI BAGIAN YANG DIPERBAIKI)
--- Dulu pakai 0.1 + ... sekarang mulai dari 40 (pixel) biar pas di bawah judul
-local startY = 40 
-for i = 1, 5 do
-    createSlot(i, startY + ((i-1)*40)) 
-end
+-- POSISI DIUBAH PAKE PIXEL MURNI, PASTI KELIATAN
+createSlot(1, 40)
+createSlot(2, 80)
+createSlot(3, 120)
+createSlot(4, 160)
+createSlot(5, 200)
 
--- DSWP (Delete Set)
+-- DSWP
 local del = Instance.new("TextButton", f)
 del.Size = UDim2.new(0.9, 0, 0, 35)
-del.Position = UDim2.new(0.05, 0, 0.72, 0)
+del.Position = UDim2.new(0.05, 0, 250, 0) -- PAKAI ANGKA PASTI
 del.Text = "DSWP (RESET ALL)"
 del.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
 del.TextColor3 = Color3.new(1, 1, 1)
 del.MouseButton1Click:Connect(function()
     slots = {nil, nil, nil, nil, nil}
-    del.Text = "RESET DONE"
-    task.wait(1)
+    del.Text = "RESET DONE!"
+    task.wait(0.5)
     del.Text = "DSWP (RESET ALL)"
 end)
 
--- WP (ESP Auto-Refresh)
+-- WP
 local wp = Instance.new("TextButton", f)
 wp.Size = UDim2.new(0.9, 0, 0, 35)
-wp.Position = UDim2.new(0.05, 0, 0.85, 0)
+wp.Position = UDim2.new(0.05, 0, 295, 0) -- PAKAI ANGKA PASTI
 wp.Text = "WP (ESP) ACTIVATE"
 wp.BackgroundColor3 = Color3.fromRGB(0, 0, 150)
 wp.TextColor3 = Color3.new(1, 1, 1)
@@ -100,9 +104,12 @@ wp.MouseButton1Click:Connect(function()
                     local h = Instance.new("Highlight", v.Character)
                     h.Name = "LEXSA_WP"
                     h.FillColor = Color3.new(1, 0, 0)
+                    h.OutlineColor = Color3.new(1,1,1)
                 end
             end
-            task.wait(3)
+            task.wait(1)
         end
     end)
 end)
+
+print("LEXSA V5 LOADED!") -- CEK DI CONSOLE KALO MUNCUL INI BERARTI JALAN
