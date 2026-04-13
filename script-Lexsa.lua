@@ -1,67 +1,45 @@
--- LEXSA (4663) - PROTOCOL HUB v2
+-- LEXSA (4663) - PROTOCOL V5 (MINIMIZABLE)
 local p = game.Players.LocalPlayer
 local sg = Instance.new("ScreenGui", p.PlayerGui)
-sg.Name = "LexsaProtocol"
+sg.Name = "LexsaV5"
+
+-- TOMBOL BUKA/TUTUP (Kecil di pojok)
+local OpenBtn = Instance.new("TextButton", sg)
+OpenBtn.Size = UDim2.new(0, 60, 0, 25)
+OpenBtn.Position = UDim2.new(0, 10, 0, 10)
+OpenBtn.Text = "LEXSA"
+OpenBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+OpenBtn.TextColor3 = Color3.new(1, 1, 1)
 
 local f = Instance.new("Frame", sg)
-f.Size = UDim2.new(0, 180, 0, 200) -- Ukuran ditambah buat tombol delete
-f.Position = UDim2.new(0.5, -90, 0.4, 0)
-f.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+f.Size = UDim2.new(0, 220, 0, 360)
+f.Position = UDim2.new(0.5, -110, 0.3, 0)
+f.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+f.Visible = false -- Mulai dengan tertutup biar ga ngalangin
 f.Active = true
 f.Draggable = true
 
+-- Fungsi Buka Tutup
+OpenBtn.MouseButton1Click:Connect(function()
+    f.Visible = not f.Visible
+end)
+
 local t = Instance.new("TextLabel", f)
 t.Size = UDim2.new(1, 0, 0, 30)
-t.Text = "LEXSA PROTOCOL"
+t.Text = "PROTOCOL V5 (5 SLOTS)"
 t.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
 t.TextColor3 = Color3.new(1, 1, 1)
 
--- 1. SWP (Scanning Watch Protocol)
-local b1 = Instance.new("TextButton", f)
-b1.Size = UDim2.new(0.9, 0, 0, 35)
-b1.Position = UDim2.new(0.05, 0, 0.2, 0)
-b1.Text = "ACTIVATE SWP"
-b1.MouseButton1Click:Connect(function()
-    print("--- [SWP] SCANNING (Max 50 Slots) ---")
-    local found = 0
-    for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("RemoteEvent") and found < 50 then 
-            found = found + 1
-            print("Slot ["..found.."]: " .. v.Name) 
-        end
-    end
-end)
+local slots = {nil, nil, nil, nil, nil}
 
--- 2. DELETE SWP LOG (Fitur Baru)
-local b_del = Instance.new("TextButton", f)
-b_del.Size = UDim2.new(0.9, 0, 0, 35)
-b_del.Position = UDim2.new(0.05, 0, 0.4, 0)
-b_del.Text = "DELETE SWP LOG"
-b_del.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-b_del.TextColor3 = Color3.new(1, 1, 1)
-b_del.MouseButton1Click:Connect(function()
-    for i = 1, 50 do print(" ") end -- Cara cepat "bersihin" console di Roblox
-    print("--- [SWP] LOG CLEARED ---")
-end)
-
--- 3. WP (Wall Protocol) - ESP
-local b2 = Instance.new("TextButton", f)
-b2.Size = UDim2.new(0.9, 0, 0, 35)
-b2.Position = UDim2.new(0.05, 0, 0.7, 0)
-b2.Text = "ACTIVATE WP"
-b2.MouseButton1Click:Connect(function()
-    b2.Text = "WP ACTIVE"
-    b2.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-    task.spawn(function()
-        while true do
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= p and v.Character and not v.Character:FindFirstChild("WP_Highlight") then
-                    local h = Instance.new("Highlight", v.Character)
-                    h.Name = "WP_Highlight"
-                    h.FillColor = Color3.fromRGB(255, 0, 0)
-                end
-            end
-            task.wait(2)
-        end
-    end)
-end)
+-- FUNGSI: Bikin Tombol Slot
+local function createSlot(id, yPos)
+    local set = Instance.new("TextButton", f)
+    set.Size = UDim2.new(0.4, 0, 0, 30)
+    set.Position = UDim2.new(0.05, 0, yPos, 0)
+    set.Text = "SET S" .. id
+    set.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    set.TextColor3 = Color3.new(1, 1, 1)
+    
+    local go = Instance.new("TextButton", f)
+    go.Size = UDim2.new(0.4, 0, 0, 30
