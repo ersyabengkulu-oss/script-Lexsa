@@ -1,138 +1,130 @@
--- LEXSA (4663) - ULTIMATE GARDEN PROTOCOL
-local p = game.Players.LocalPlayer
-local sg = Instance.new("ScreenGui", p.PlayerGui)
-sg.Name = "LexsaUltimateGarden"
+-- ====================================================
+-- ROBLOX GUI AUTO REJOIN & ANTI-AFK PREMIUM
+-- ====================================================
 
--- TOMBOL MINIMIZE
-local OpenBtn = Instance.new("TextButton", sg)
-OpenBtn.Size = UDim2.new(0, 65, 0, 25)
-OpenBtn.Position = UDim2.new(0, 10, 0, 10)
-OpenBtn.Text = "LEXSA"
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
-OpenBtn.TextColor3 = Color3.new(1, 1, 1)
+-- 1. MEMBUAT INTERFACE / UI GRAFIS
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local InputLabel = Instance.new("TextLabel")
+local MinuteInput = Instance.new("TextBox")
+local ToggleBtn = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UICorner2 = Instance.new("UICorner")
+local UICorner3 = Instance.new("UICorner")
 
-local f = Instance.new("Frame", sg)
-f.Size = UDim2.new(0, 210, 0, 360) -- Ukuran ditambah biar muat semua
-f.Position = UDim2.new(0.5, -105, 0.25, 0)
-f.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-f.Visible = false
-f.Active = true
-f.Draggable = true
+-- Mengatur Tempat UI Berlabuh
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
 
-OpenBtn.MouseButton1Click:Connect(function() f.Visible = not f.Visible end)
+-- Frame Utama (Kotak Menu)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35) -- Tema Gelap
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0) -- Posisi kiri agak tengah layar
+MainFrame.Size = UDim2.new(0, 220, 0, 180)
+MainFrame.Active = true
+MainFrame.Draggable = true -- UI bisa digeser/drag pakai jari/mouse
 
-local t = Instance.new("TextLabel", f)
-t.Size = UDim2.new(1, 0, 0, 30)
-t.Text = "LEXSA GARDEN V8"
-t.BackgroundColor3 = Color3.fromRGB(0, 100, 40)
-t.TextColor3 = Color3.new(1, 1, 1)
+UICorner.Parent = MainFrame
 
--- 1. SELECTION LOGIC
-local types = {"Elephant", "Mutation", "Normal", "Rare"}
-local currentIdx = 1
-local selBtn = Instance.new("TextButton", f)
-selBtn.Size = UDim2.new(0.9, 0, 0, 35)
-selBtn.Position = UDim2.new(0.05, 0, 0.12, 0)
-selBtn.Text = "TARGET: " .. types[currentIdx]
-selBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-selBtn.TextColor3 = Color3.new(1, 1, 1)
+-- Judul Menu
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "LEXSA REJOIN SYSTEM"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150) -- Warna Hijau Neon Cyberpunk
+Title.TextSize = 16
 
-selBtn.MouseButton1Click:Connect(function()
-    currentIdx = currentIdx + 1
-    if currentIdx > #types then currentIdx = 1 end
-    selBtn.Text = "TARGET: " .. types[currentIdx]
+-- Label Input
+InputLabel.Parent = MainFrame
+InputLabel.BackgroundTransparency = 1
+InputLabel.Position = UDim2.new(0, 10, 0, 45)
+InputLabel.Size = UDim2.new(0, 200, 0, 25)
+InputLabel.Font = Enum.Font.SourceSans
+InputLabel.Text = "Atur Waktu Jeda (Menit):"
+InputLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+InputLabel.TextSize = 14
+InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Kotak Input Menit (Bisa Diketik)
+MinuteInput.Name = "MinuteInput"
+MinuteInput.Parent = MainFrame
+MinuteInput.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+MinuteInput.Position = UDim2.new(0, 10, 0, 75)
+MinuteInput.Size = UDim2.new(0, 200, 0, 30)
+MinuteInput.Font = Enum.Font.SourceSans
+MinuteInput.Text = "5" -- Default waktu 5 menit
+MinuteInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinuteInput.TextSize = 16
+UICorner2.Parent = MinuteInput
+
+-- Tombol Saklar ON/OFF
+ToggleBtn.Name = "ToggleBtn"
+ToggleBtn.Parent = MainFrame
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Merah pas OFF
+ToggleBtn.Position = UDim2.new(0, 10, 0, 120)
+ToggleBtn.Size = UDim2.new(0, 200, 0, 40)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.Text = "STATUS: OFF"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 16
+UICorner3.Parent = ToggleBtn
+
+-- 2. LOGIKA DAN SISTEM UTAMA
+local SistemAktif = false
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Fitur Anti-AFK Bawaan (Selalu aktif pas UI di-inject agar tidak terdepak 20 menit)
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    if SistemAktif then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
 end)
 
--- 2. AUTO GRIND (Auto Click/Eat)
-local working = false
-local workBtn = Instance.new("TextButton", f)
-workBtn.Size = UDim2.new(0.9, 0, 0, 45)
-workBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
-workBtn.Text = "AUTO GRIND: OFF"
-workBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-
-workBtn.MouseButton1Click:Connect(function()
-    working = not working
-    workBtn.Text = working and "GRINDING..." or "AUTO GRIND: OFF"
-    workBtn.BackgroundColor3 = working and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(50, 50, 50)
-    task.spawn(function()
-        while working do
-            local tool = p.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
-            task.wait(0.05)
-        end
-    end)
-end)
-
--- 3. FAST SKILL RESET (No Animation)
-local fastSkill = false
-local skillBtn = Instance.new("TextButton", f)
-skillBtn.Size = UDim2.new(0.9, 0, 0, 45)
-skillBtn.Position = UDim2.new(0.05, 0, 0.40, 0)
-skillBtn.Text = "FAST SKILL: OFF"
-skillBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
-
-skillBtn.MouseButton1Click:Connect(function()
-    fastSkill = not fastSkill
-    skillBtn.Text = fastSkill and "FAST SKILL: ON" or "FAST SKILL: OFF"
-    task.spawn(function()
-        while fastSkill do
-            local tool = p.Character:FindFirstChildOfClass("Tool")
-            if tool then
-                tool:Activate()
-                tool.Parent = p.Backpack
-                task.wait(0.01)
-                p.Character.Humanoid:EquipTool(tool)
-            end
-            task.wait(0.05)
-        end
-    end)
-end)
-
--- 4. AUTO PICK PLACE
-local picking = false
-local pickBtn = Instance.new("TextButton", f)
-pickBtn.Size = UDim2.new(0.9, 0, 0, 45)
-pickBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
-pickBtn.Text = "PICK PLACE: OFF"
-pickBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
-
-pickBtn.MouseButton1Click:Connect(function()
-    picking = not picking
-    pickBtn.Text = picking and "PICKING..." or "PICK PLACE: OFF"
-    task.spawn(function()
-        while picking do
-            for _, v in pairs(game.Workspace:GetChildren()) do
-                if v:FindFirstChild("ClickDetector") then
-                    fireclickdetector(v.ClickDetector)
+-- Loop Fungsi Pengecekan Rejoin
+spawn(function()
+    while true do
+        wait(5) -- Cek status saklar setiap 5 detik
+        if SistemAktif then
+            local durasi = tonumber(MinuteInput.Text) or 5
+            wait(durasi * 60)
+            
+            -- Jika tombol putus koneksi/DC terdeteksi di layar kamu
+            local CoreGui = game:GetService("CoreGui")
+            if CoreGui:FindFirstChild("RobloxPromptGui") then
+                local prompt = CoreGui.RobloxPromptGui:FindFirstChild("promptOverlay")
+                if prompt and prompt:FindFirstChild("ErrorPrompt") then
+                    
+                    local TeleportService = game:GetService("TeleportService")
+                    local Players = game:GetService("Players")
+                    
+                    if #Players:GetPlayers() <= 1 then
+                        -- Jika di Private Server sendirian
+                        TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+                    else
+                        -- Jika di Public Server / Server Ramai
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+                    end
                 end
             end
-            task.wait(0.5)
-            local tool = p.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
         end
-    end)
+    end
 end)
 
--- 5. WP (ESP)
-local espOn = false
-local wpBtn = Instance.new("TextButton", f)
-wpBtn.Size = UDim2.new(0.9, 0, 0, 45)
-wpBtn.Position = UDim2.new(0.05, 0, 0.85, 0) -- Paling bawah
-wpBtn.Text = "WP (ESP) OFF"
-wpBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-
-wpBtn.MouseButton1Click:Connect(function()
-    espOn = not espOn
-    wpBtn.Text = espOn and "WP (ESP) ON" or "WP (ESP) OFF"
-    task.spawn(function()
-        while espOn do
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= p and v.Character and not v.Character:FindFirstChild("L_ESP") then
-                    Instance.new("Highlight", v.Character).Name = "L_ESP"
-                end
-            end
-            task.wait(3)
-        end
-    end)
+-- Mengatur Klik Tombol SAKLAR ON/OFF
+ToggleBtn.MouseButton1Click:Connect(function()
+    SistemAktif = not SistemAktif
+    if SistemAktif then
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50) -- Berubah Hijau saat ON
+        ToggleBtn.Text = "STATUS: ON"
+        print("[LEXSA] Auto Rejoin dinyalakan dengan jeda " .. MinuteInput.Text .. " menit.")
+    else
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Berubah Merah saat OFF
+        ToggleBtn.Text = "STATUS: OFF"
+        print("[LEXSA] Auto Rejoin dimatikan.")
+    end
 end)
