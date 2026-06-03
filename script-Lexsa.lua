@@ -1,130 +1,195 @@
 -- ====================================================
--- ROBLOX GUI AUTO REJOIN & ANTI-AFK PREMIUM
+-- ROBLOX GUI AUTO REJOIN V5 (AUTO-SAVE CONFIG & TOGGLE UI)
 -- ====================================================
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
+local VirtualUser = game:GetService("VirtualUser")
+local TeleportService = game:GetService("TeleportService")
 
--- 1. MEMBUAT INTERFACE / UI GRAFIS
+-- Nama file untuk menyimpan konfigurasi menit kamu
+local FILE_CONFIG = "LexsaConfig.txt"
+
+-- Fungsi mengambil config lama (jika ada)
+local function AmbilConfig()
+    local sukses, isi = pcall(function()
+        return readfile(FILE_CONFIG)
+    end)
+    if sukses and isi then
+        return tonumber(isi) or 1
+    end
+    return 1 -- Default jika belum ada config
+end
+
+-- Fungsi menyimpan config baru
+local function SimpanConfig(menit)
+    pcall(function()
+        writefile(FILE_CONFIG, tostring(menit))
+    end)
+end
+
+-- 1. PEMBUATAN INTERFACE / UI
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
 local InputLabel = Instance.new("TextLabel")
 local MinuteInput = Instance.new("TextBox")
-local ToggleBtn = Instance.new("TextButton")
+local StatusLabel = Instance.new("TextLabel")
+local CloseBtn = Instance.new("TextButton")
+local MinimizeBtn = Instance.new("TextButton")
+local ToggleUIBtn = Instance.new("TextButton") -- Tombol melayang buat buka/tutup
 local UICorner = Instance.new("UICorner")
 local UICorner2 = Instance.new("UICorner")
 local UICorner3 = Instance.new("UICorner")
 
--- Mengatur Tempat UI Berlabuh
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
--- Frame Utama (Kotak Menu)
+-- Tombol Melayang Kecil untuk Buka/Tutup UI Utama
+ToggleUIBtn.Name = "ToggleUIBtn"
+ToggleUIBtn.Parent = ScreenGui
+ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+ToggleUIBtn.Position = UDim2.new(0, 10, 0, 10) -- Pojok kiri atas layar
+ToggleUIBtn.Size = UDim2.new(0, 80, 0, 30)
+ToggleUIBtn.Font = Enum.Font.SourceSansBold
+ToggleUIBtn.Text = "MENU"
+ToggleUIBtn.TextColor3 = Color3.fromRGB(25, 25, 35)
+ToggleUIBtn.TextSize = 14
+UICorner3.Parent = ToggleUIBtn
+
+-- Frame Utama
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35) -- Tema Gelap
-MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0) -- Posisi kiri agak tengah layar
-MainFrame.Size = UDim2.new(0, 220, 0, 180)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 140)
 MainFrame.Active = true
-MainFrame.Draggable = true -- UI bisa digeser/drag pakai jari/mouse
-
+MainFrame.Draggable = true
 UICorner.Parent = MainFrame
 
--- Judul Menu
-Title.Name = "Title"
 Title.Parent = MainFrame
 Title.BackgroundTransparency = 1
-Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Size = UDim2.new(0, 160, 0, 30)
+Title.Position = UDim2.new(0, 10, 0, 0)
 Title.Font = Enum.Font.SourceSansBold
-Title.Text = "LEXSA REJOIN SYSTEM"
-Title.TextColor3 = Color3.fromRGB(0, 255, 150) -- Warna Hijau Neon Cyberpunk
-Title.TextSize = 16
+Title.Text = "LEXSA REJOIN V5"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Label Input
+-- Tombol Close (X) - Pojok kanan atas frame utama
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Position = UDim2.new(0, 195, 0, 5)
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+CloseBtn.TextSize = 16
+
+-- Tombol Minimize (-) - Sebelah tombol close
+MinimizeBtn.Parent = MainFrame
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Position = UDim2.new(0, 170, 0, 5)
+MinimizeBtn.Size = UDim2.new(0, 20, 0, 20)
+MinimizeBtn.Font = Enum.Font.SourceSansBold
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+MinimizeBtn.TextSize = 20
+
 InputLabel.Parent = MainFrame
 InputLabel.BackgroundTransparency = 1
-InputLabel.Position = UDim2.new(0, 10, 0, 45)
-InputLabel.Size = UDim2.new(0, 200, 0, 25)
+InputLabel.Position = UDim2.new(0, 10, 0, 35)
+InputLabel.Size = UDim2.new(0, 200, 0, 20)
 InputLabel.Font = Enum.Font.SourceSans
-InputLabel.Text = "Atur Waktu Jeda (Menit):"
+InputLabel.Text = "Jeda Cek Rejoin (Menit):"
 InputLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-InputLabel.TextSize = 14
+InputLabel.TextSize = 13
 InputLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- Kotak Input Menit (Bisa Diketik)
-MinuteInput.Name = "MinuteInput"
 MinuteInput.Parent = MainFrame
 MinuteInput.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-MinuteInput.Position = UDim2.new(0, 10, 0, 75)
+MinuteInput.Position = UDim2.new(0, 10, 0, 60)
 MinuteInput.Size = UDim2.new(0, 200, 0, 30)
 MinuteInput.Font = Enum.Font.SourceSans
-MinuteInput.Text = "5" -- Default waktu 5 menit
+MinuteInput.Text = tostring(AmbilConfig()) -- Otomatis memuat config terakhir
 MinuteInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinuteInput.TextSize = 16
+MinuteInput.TextSize = 15
 UICorner2.Parent = MinuteInput
 
--- Tombol Saklar ON/OFF
-ToggleBtn.Name = "ToggleBtn"
-ToggleBtn.Parent = MainFrame
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Merah pas OFF
-ToggleBtn.Position = UDim2.new(0, 10, 0, 120)
-ToggleBtn.Size = UDim2.new(0, 200, 0, 40)
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.Text = "STATUS: OFF"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 16
-UICorner3.Parent = ToggleBtn
+StatusLabel.Parent = MainFrame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Position = UDim2.new(0, 10, 0, 100)
+StatusLabel.Size = UDim2.new(0, 200, 0, 30)
+StatusLabel.Font = Enum.Font.SourceSansBold
+StatusLabel.Text = "SISTEM AKTIF & AUTO-SAVE"
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+StatusLabel.TextSize = 12
 
--- 2. LOGIKA DAN SISTEM UTAMA
-local SistemAktif = false
-local VirtualUser = game:GetService("VirtualUser")
+-- ====================================================
+-- LOGIKA TOMBOL & SAKLAR INTERACTION
+-- ====================================================
 
--- Fitur Anti-AFK Bawaan (Selalu aktif pas UI di-inject agar tidak terdepak 20 menit)
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    if SistemAktif then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
+-- Fitur Ketik Angka Langsung Auto-Save Otomatis
+MinuteInput:GetPropertyChangedSignal("Text"):Connect(function()
+    local angka = tonumber(MinuteInput.Text)
+    if angka then
+        SimpanConfig(angka) -- Simpan setiap kali kamu mengubah angka menit
     end
 end)
 
--- Loop Fungsi Pengecekan Rejoin
+-- Klik tombol melayang (MENU) untuk buka/tutup UI
+ToggleUIBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Klik tombol Minimize (-) untuk menyembunyikan frame
+MinimizeBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Klik tombol Close (X) untuk menghapus seluruh script & UI dari layar
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- ====================================================
+-- LOGIKA UTAMA (SISTEM REJOIN & ANTI-AFK)
+-- ====================================================
+
+-- Anti-AFK Bawaan
+Players.LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Fungsi Pemicu Rejoin
+local function AmbilTindakanRejoin()
+    if #Players:GetPlayers() <= 1 then
+        TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+    end
+end
+
+-- Deteksi Layar Error DC
+GuiService.ErrorMessageChanged:Connect(function()
+    local jedaWaktu = tonumber(MinuteInput.Text) or 1
+    wait(jedaWaktu * 60)
+    AmbilTindakanRejoin()
+end)
+
+-- Backup Loop Deteksi Freeze
 spawn(function()
     while true do
-        wait(5) -- Cek status saklar setiap 5 detik
-        if SistemAktif then
-            local durasi = tonumber(MinuteInput.Text) or 5
-            wait(durasi * 60)
-            
-            -- Jika tombol putus koneksi/DC terdeteksi di layar kamu
-            local CoreGui = game:GetService("CoreGui")
-            if CoreGui:FindFirstChild("RobloxPromptGui") then
-                local prompt = CoreGui.RobloxPromptGui:FindFirstChild("promptOverlay")
-                if prompt and prompt:FindFirstChild("ErrorPrompt") then
-                    
-                    local TeleportService = game:GetService("TeleportService")
-                    local Players = game:GetService("Players")
-                    
-                    if #Players:GetPlayers() <= 1 then
-                        -- Jika di Private Server sendirian
-                        TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
-                    else
-                        -- Jika di Public Server / Server Ramai
-                        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
-                    end
-                end
-            end
+        local jedaWaktu = tonumber(MinuteInput.Text) or 1
+        wait(jedaWaktu * 60)
+        
+        local CoreGui = game:GetService("CoreGui")
+        local promptGui = CoreGui:FindFirstChild("RobloxPromptGui")
+        if promptGui and promptGui:FindFirstChild("promptOverlay") then
+            AmbilTindakanRejoin()
         end
     end
 end)
 
--- Mengatur Klik Tombol SAKLAR ON/OFF
-ToggleBtn.MouseButton1Click:Connect(function()
-    SistemAktif = not SistemAktif
-    if SistemAktif then
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50) -- Berubah Hijau saat ON
-        ToggleBtn.Text = "STATUS: ON"
-        print("[LEXSA] Auto Rejoin dinyalakan dengan jeda " .. MinuteInput.Text .. " menit.")
-    else
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Berubah Merah saat OFF
-        ToggleBtn.Text = "STATUS: OFF"
-        print("[LEXSA] Auto Rejoin dimatikan.")
-    end
-end)
