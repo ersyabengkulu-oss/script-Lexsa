@@ -1,6 +1,8 @@
 -- ====================================================
--- ROBLOX GUI AUTO REJOIN V7 (VERSI TERBARU - AMAN)
--- HANYA BACA LINK PRIVATE SERVER RESMI ROBLOX
+-- LEXSA REJOIN V7 - KHUSUS BISA PAKAI LINK SHARE / PS
+-- BISA PAKAI:
+-- ✅ https://www.roblox.com/share?code=...&type=Server
+-- ✅ https://www.roblox.com/games/...?privateServerLinkCode=...
 -- ====================================================
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -135,13 +137,13 @@ MinuteInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinuteInput.TextSize = 15
 UICorner2.Parent = MinuteInput
 
--- Input Link PS
+-- Input Link PS (BISA LINK SHARE ATAU LINK BIASA)
 PSLabel.Parent = MainFrame
 PSLabel.BackgroundTransparency = 1
 PSLabel.Position = UDim2.new(0, 10, 0, 95)
 PSLabel.Size = UDim2.new(0, 220, 0, 20)
 PSLabel.Font = Enum.Font.SourceSans
-PSLabel.Text = "Link PS (HANYA RESMI ROBLOX):"
+PSLabel.Text = "Link PS (Bisa Share / Resmi):"
 PSLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 PSLabel.TextSize = 13
 PSLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -152,9 +154,9 @@ PSInput.Position = UDim2.new(0, 10, 0, 115)
 PSInput.Size = UDim2.new(0, 220, 0, 30)
 PSInput.Font = Enum.Font.SourceSans
 PSInput.Text = ConfigSistem.LinkPS
-PSInput.PlaceholderText = "Contoh: ...?privateServerLinkCode=12345"
+PSInput.PlaceholderText = "Bisa: share?code=... atau privateServerLinkCode=..."
 PSInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-PSInput.TextSize = 12
+PSInput.TextSize = 11
 UICorner5.Parent = PSInput
 
 -- Tombol ON/OFF
@@ -205,7 +207,7 @@ MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 -- ====================================================
--- LOGIKA UTAMA (HANYA BACA LINK RESMI)
+-- LOGIKA UTAMA: BISA BACA KEDUA JENIS LINK
 -- ====================================================
 
 -- Anti-AFK
@@ -216,27 +218,35 @@ Players.LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- ✅ FUNGSI PENTING: HANYA AMBIL KODE LINK RESMI
+-- ✅ FUNGSI PENTING: BACA LINK SHARE & LINK RESMI
 local function AmbilKodeLink(link)
-    -- HANYA BACA JIKA ADA "privateServerLinkCode="
-    local kode = string.match(link, "privateServerLinkCode=(%d+)")
-    if kode then
-        print("[LEXSA] ✅ Kode PS ditemukan: "..kode)
-        return kode
-    else
-        print("[LEXSA] ❌ LINK SALAH! Gunakan link dari 'Salin Tautan' di dalam game saja.")
-        return nil
+    -- 1. BACA LINK SHARE KAMU: https://www.roblox.com/share?code=KODE&type=Server
+    local kodeShare = string.match(link, "share%?code=([%w]+)")
+    if kodeShare then
+        print("[LEXSA] ✅ Pakai Link Share Roblox: "..kodeShare)
+        return kodeShare
     end
+
+    -- 2. BACA LINK RESMI: ...?privateServerLinkCode=ANGKA
+    local kodeResmi = string.match(link, "privateServerLinkCode=(%d+)")
+    if kodeResmi then
+        print("[LEXSA] ✅ Pakai Link Resmi: "..kodeResmi)
+        return kodeResmi
+    end
+
+    print("[LEXSA] ❌ Link tidak dikenali!")
+    return nil
 end
 
 -- Fungsi Masuk Server
 local function EksekusiRejoinLink()
     if not ConfigSistem.Aktif then return end
+    print("[LEXSA] ⏩ Sedang masuk ke Server...")
 
     local kode = AmbilKodeLink(ConfigSistem.LinkPS)
 
     if kode then
-        -- ✅ Masuk ke Private Server yang BENAR
+        -- ✅ Masuk ke PS pakai kode apa saja yang didapat
         pcall(function()
             TeleportService:TeleportToPrivateServer(
                 game.PlaceId,
@@ -252,7 +262,7 @@ local function EksekusiRejoinLink()
     end
 end
 
--- Deteksi Error
+-- Deteksi Error / Putus Koneksi
 GuiService.ErrorMessageChanged:Connect(function()
     if ConfigSistem.Aktif then
         wait(ConfigSistem.Menit * 60)
