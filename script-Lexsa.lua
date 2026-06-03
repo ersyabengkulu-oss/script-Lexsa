@@ -1,22 +1,26 @@
 -- ====================================================
--- ROBLOX GUI AUTO REJOIN V7 (PRIVATE SERVER LINK EDITION)
+-- ROBLOX GUI AUTO REJOIN V7 (VERSI TERBARU - AMAN)
+-- HANYA BACA LINK PRIVATE SERVER RESMI ROBLOX
 -- ====================================================
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
+local TeleportService = game:GetService("TeleportService")
 local VirtualUser = game:GetService("VirtualUser")
 
--- Nama file konfigurasi di folder workspace executor kamu
+-- Nama file konfigurasi
 local FILE_CONFIG = "LexsaV7Config.txt"
 
--- Struktur default jika file belum ada
+-- Data simpanan
 local ConfigSistem = {
     Menit = 5,
     Aktif = false,
     LinkPS = ""
 }
 
--- Fungsi Membaca Config Lama
+-- ====================================================
+-- BACA & SIMPAN DATA
+-- ====================================================
 local function MuatKonfigurasi()
     local sukses, isi = pcall(function() return readfile(FILE_CONFIG) end)
     if sukses and isi then
@@ -29,19 +33,16 @@ local function MuatKonfigurasi()
     end
 end
 
--- Fungsi Menyimpan Config secara Real-time
 local function SimpanKonfigurasi()
     pcall(function()
-        local dataString = HttpService:JSONEncode(ConfigSistem)
-        writefile(FILE_CONFIG, dataString)
+        writefile(FILE_CONFIG, HttpService:JSONEncode(ConfigSistem))
     end)
 end
 
--- Muat data lama sebelum UI dibuat
 MuatKonfigurasi()
 
 -- ====================================================
--- PEMBUATAN INTERFACE / UI GRAFIS (DIPERBESAR UNTUK LINK)
+-- TAMPILAN UI (SAMA SEPERTI KAMU PUNYA)
 -- ====================================================
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
@@ -63,7 +64,7 @@ local UICorner5 = Instance.new("UICorner")
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
--- Tombol Melayang Utama (MENU)
+-- Tombol Menu
 ToggleUIBtn.Name = "ToggleUIBtn"
 ToggleUIBtn.Parent = ScreenGui
 ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
@@ -75,7 +76,7 @@ ToggleUIBtn.TextColor3 = Color3.fromRGB(25, 25, 35)
 ToggleUIBtn.TextSize = 14
 UICorner4.Parent = ToggleUIBtn
 
--- Frame Utama Menu (Ukuran ditinggikan jadi 230 agar muat kotak Link)
+-- Frame Utama
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
@@ -95,7 +96,6 @@ Title.TextColor3 = Color3.fromRGB(0, 255, 150)
 Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Tombol Buka Tutup & Keluar
 CloseBtn.Parent = MainFrame
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Position = UDim2.new(0, 215, 0, 5)
@@ -114,7 +114,7 @@ MinimizeBtn.Text = "-"
 MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 MinimizeBtn.TextSize = 20
 
--- Input 1: Menit Jeda
+-- Input Waktu
 InputLabel.Parent = MainFrame
 InputLabel.BackgroundTransparency = 1
 InputLabel.Position = UDim2.new(0, 10, 0, 35)
@@ -135,13 +135,13 @@ MinuteInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinuteInput.TextSize = 15
 UICorner2.Parent = MinuteInput
 
--- Input 2: Link Private Server
+-- Input Link PS
 PSLabel.Parent = MainFrame
 PSLabel.BackgroundTransparency = 1
 PSLabel.Position = UDim2.new(0, 10, 0, 95)
 PSLabel.Size = UDim2.new(0, 220, 0, 20)
 PSLabel.Font = Enum.Font.SourceSans
-PSLabel.Text = "Link Private Server (Roblox):"
+PSLabel.Text = "Link PS (HANYA RESMI ROBLOX):"
 PSLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 PSLabel.TextSize = 13
 PSLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -152,12 +152,12 @@ PSInput.Position = UDim2.new(0, 10, 0, 115)
 PSInput.Size = UDim2.new(0, 220, 0, 30)
 PSInput.Font = Enum.Font.SourceSans
 PSInput.Text = ConfigSistem.LinkPS
-PSInput.PlaceholderText = "Paste link PS kamu disini..."
+PSInput.PlaceholderText = "Contoh: ...?privateServerLinkCode=12345"
 PSInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 PSInput.TextSize = 12
 UICorner5.Parent = PSInput
 
--- Tombol Saklar ON/OFF
+-- Tombol ON/OFF
 ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Parent = MainFrame
 ToggleBtn.Position = UDim2.new(0, 10, 0, 165)
@@ -167,7 +167,6 @@ ToggleBtn.TextSize = 16
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 UICorner3.Parent = ToggleBtn
 
--- Fungsi Mengatur Tampilan Tombol Sesuai Data Save-an
 local function PerbaruiTampilanTombol()
     if ConfigSistem.Aktif then
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
@@ -180,22 +179,21 @@ end
 PerbaruiTampilanTombol()
 
 -- ====================================================
--- REAL-TIME AUTO SAVE EVENTS
+-- AUTO SAVE
 -- ====================================================
-
--- Auto Save Menit
 MinuteInput:GetPropertyChangedSignal("Text"):Connect(function()
     local angka = tonumber(MinuteInput.Text)
-    if angka then ConfigSistem.Menit = angka SimpanKonfigurasi() end
+    if angka and angka > 0 then
+        ConfigSistem.Menit = angka
+        SimpanKonfigurasi()
+    end
 end)
 
--- Auto Save Link PS saat diketik/di-paste
 PSInput:GetPropertyChangedSignal("Text"):Connect(function()
     ConfigSistem.LinkPS = PSInput.Text
     SimpanKonfigurasi()
 end)
 
--- Saklar Klik ON/OFF
 ToggleBtn.MouseButton1Click:Connect(function()
     ConfigSistem.Aktif = not ConfigSistem.Aktif
     SimpanKonfigurasi()
@@ -207,10 +205,10 @@ MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 -- ====================================================
--- LOGIKA UTAMA EKSEKUSI JOIN LINK (ANTI-AFK & ERROR 279)
+-- LOGIKA UTAMA (HANYA BACA LINK RESMI)
 -- ====================================================
 
--- Anti-AFK konstan di background
+-- Anti-AFK
 Players.LocalPlayer.Idled:Connect(function()
     if ConfigSistem.Aktif then
         VirtualUser:CaptureController()
@@ -218,39 +216,43 @@ Players.LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- Fungsi Pemicu Rejoin Khusus via Link Private Server atau Browser Emulator
+-- ✅ FUNGSI PENTING: HANYA AMBIL KODE LINK RESMI
+local function AmbilKodeLink(link)
+    -- HANYA BACA JIKA ADA "privateServerLinkCode="
+    local kode = string.match(link, "privateServerLinkCode=(%d+)")
+    if kode then
+        print("[LEXSA] ✅ Kode PS ditemukan: "..kode)
+        return kode
+    else
+        print("[LEXSA] ❌ LINK SALAH! Gunakan link dari 'Salin Tautan' di dalam game saja.")
+        return nil
+    end
+end
+
+-- Fungsi Masuk Server
 local function EksekusiRejoinLink()
     if not ConfigSistem.Aktif then return end
-    print("[LEXSA] Memulai proses rejoin via link...")
 
-    -- Jika kamu memasukkan link PS, kita gunakan metode Deep Link khusus
-    if ConfigSistem.LinkPS and ConfigSistem.LinkPS ~= "" then
-        -- Mengubah link https biasa menjadi skema protokol pembuka aplikasi roblox://
-        local kodeLink = string.match(ConfigSistem.LinkPS, "privateServerLinkCode=(%d+)")
-        local linkFinal = "roblox://placeId=" .. game.PlaceId
-        if kodeLink then
-            linkFinal = linkFinal .. "&privateServerLinkCode=" .. kodeLink
-        end
+    local kode = AmbilKodeLink(ConfigSistem.LinkPS)
 
-        -- Memaksa browser emulator menembakkan link agar aplikasi Roblox me-restart paksa ke server baru
+    if kode then
+        -- ✅ Masuk ke Private Server yang BENAR
         pcall(function()
-            game:GetService("HttpService"):GetAsync("http://localhost:1234/open?url=" .. linkFinal)
-        end)
-        
-        -- Cadangan Teleport internal jika link gagal ditembak lewat browser emulator
-        wait(2)
-        pcall(function()
-            game:GetService("TeleportService"):ToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+            TeleportService:TeleportToPrivateServer(
+                game.PlaceId,
+                kode,
+                Players.LocalPlayer
+            )
         end)
     else
-        -- Jika kolom Link kosong, pakai teleport normal biasa
+        -- ❌ Link salah -> Rejoin biasa
         pcall(function()
-            game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
+            TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
         end)
     end
 end
 
--- Deteksi Layar Error (Error 279, 260, dll)
+-- Deteksi Error
 GuiService.ErrorMessageChanged:Connect(function()
     if ConfigSistem.Aktif then
         wait(ConfigSistem.Menit * 60)
@@ -258,15 +260,16 @@ GuiService.ErrorMessageChanged:Connect(function()
     end
 end)
 
--- Backup Loop Deteksi Layar Beku / Overlay Error Prompts
+-- Loop Otomatis
 spawn(function()
     while true do
-        wait(5)
+        wait(ConfigSistem.Menit * 60)
         if ConfigSistem.Aktif then
-            wait(ConfigSistem.Menit * 60)
             local CoreGui = game:GetService("CoreGui")
-            local promptGui = CoreGui:FindFirstChild("RobloxPromptGui")
-            if promptGui and promptGui:FindFirstChild("promptOverlay") then
+            local prompt = CoreGui:FindFirstChild("RobloxPromptGui")
+            if prompt and prompt:FindFirstChild("promptOverlay") then
+                EksekusiRejoinLink()
+            else
                 EksekusiRejoinLink()
             end
         end
