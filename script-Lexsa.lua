@@ -1,6 +1,5 @@
 -- ============================================
--- LEXSA - GROW A GARDEN (FULL VERSION)
--- Scan Pet | Pick & Place | Leveling | Elephant
+-- LEXSA - GROW A GARDEN (FIX GUI)
 -- ============================================
 
 local Players = game:GetService("Players")
@@ -26,8 +25,26 @@ local isRunning = false
 local petList = {}
 local stats = {Pick=0, Place=0, Level=0, Elephant=0}
 local selectedPets = {}
+local gui = nil
+local listFrame = nil
+local statusLabel = nil
+local statsLabel = nil
 
 -- ============ FUNGSI CARI PET ============
+local function GetAge(pet)
+    if not pet then return 0 end
+    local attrs = pet:FindFirstChild("Attributes")
+    if attrs then
+        for _, c in pairs(attrs:GetChildren()) do
+            local n = c.Name:lower()
+            if n:find("age") or n:find("level") then
+                return tonumber(c.Value) or 0
+            end
+        end
+    end
+    return 0
+end
+
 local function ScanPets()
     petList = {}
     local pm = Workspace:FindFirstChild("PetsPhysical")
@@ -41,10 +58,9 @@ local function ScanPets()
                 if root then
                     local dist = (HumanoidRootPart.Position - root.Position).Magnitude
                     if dist <= Settings.Radius then
-                        local age = GetAge(f)
                         table.insert(petList, {
                             id = f.Name,
-                            age = age,
+                            age = GetAge(f),
                             pet = f,
                             selected = selectedPets[f.Name] or false
                         })
@@ -56,31 +72,7 @@ local function ScanPets()
     UpdatePetList()
 end
 
--- ============ FUNGSI CEK AGE ============
-local function GetAge(pet)
-    if not pet then return 0 end
-    local attrs = pet:FindFirstChild("Attributes")
-    if attrs then
-        for _, c in pairs(attrs:GetChildren()) do
-            local n = c.Name:lower()
-            if n:find("age") or n:find("level") then
-                return tonumber(c.Value) or 0
-            end
-        end
-    end
-    local statsFolder = pet:FindFirstChild("Stats")
-    if statsFolder then
-        for _, c in pairs(statsFolder:GetChildren()) do
-            local n = c.Name:lower()
-            if n:find("age") or n:find("level") then
-                return tonumber(c.Value) or 0
-            end
-        end
-    end
-    return 0
-end
-
--- ============ FUNGSI KLIK TOMBOL UI ============
+-- ============ FUNGSI KLIK TOMBOL ============
 local function ClickButton(name)
     local petUI = Player.PlayerGui:FindFirstChild("PetUI")
     if not petUI then return false end
@@ -101,8 +93,6 @@ local function MainLoop()
     for _, data in pairs(petList) do
         if not data.selected then goto skip end
         
-        local age = data.age
-        
         if Settings.Pick then
             if ClickButton("PickUp") then stats.Pick = stats.Pick + 1 end
             task.wait(0.15)
@@ -113,7 +103,7 @@ local function MainLoop()
             task.wait(0.15)
         end
         
-        if Settings.Level and age < Settings.TargetAge then
+        if Settings.Level and data.age < Settings.TargetAge then
             if ClickButton("LevelUp") then 
                 stats.Level = stats.Level + 1
                 data.age = data.age + 1
@@ -121,7 +111,7 @@ local function MainLoop()
             task.wait(0.25)
         end
         
-        if Settings.Elephant and age >= Settings.TargetAge then
+        if Settings.Elephant and data.age >= Settings.TargetAge then
             if ClickButton("Elephant") then 
                 stats.Elephant = stats.Elephant + 1
                 data.age = 1
@@ -139,8 +129,6 @@ local function Toggle()
     if isRunning then
         stats = {Pick=0, Place=0, Level=0, Elephant=0}
         print("✅ START")
-        print("📁 Pick:"..tostring(Settings.Pick).." Place:"..tostring(Settings.Place))
-        print("📁 Level:"..tostring(Settings.Level).." Elephant:"..tostring(Settings.Elephant))
         while isRunning do
             MainLoop()
             task.wait(1)
@@ -148,6 +136,7 @@ local function Toggle()
     else
         print("❌ STOP | Pick:"..stats.Pick.." Place:"..stats.Place.." Level:"..stats.Level.." Elephant:"..stats.Elephant)
     end
+    UpdateStatus()
 end
 
 -- ============ KEYBIND ============
@@ -157,9 +146,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
     if input.KeyCode == Enum.KeyCode.R then ScanPets() end
 end)
 
--- ============ GUI ============
-local gui, listFrame, statusLabel, statsLabel
-
+-- ============ GUI UPDATE ============
 local function UpdatePetList()
     if not listFrame then return end
     for _, c in pairs(listFrame:GetChildren()) do
@@ -169,7 +156,7 @@ local function UpdatePetList()
     if #petList == 0 then
         local empty = Instance.new("TextLabel")
         empty.Size = UDim2.new(1,0,0,30)
-        empty.Text = "Tidak ada pet (tekan R)"
+        empty.Text = "Tekan R untuk scan"
         empty.TextColor3 = Color3.fromRGB(200,200,200)
         empty.BackgroundTransparency = 1
         empty.Font = Enum.Font.Gotham
@@ -207,6 +194,17 @@ local function UpdatePetList()
     listFrame.CanvasSize = UDim2.new(0,0,0,#petList*28+10)
 end
 
+local function UpdateStatus()
+    if statusLabel then
+        statusLabel.Text = isRunning and "▶️ BERJALAN" or "⏹️ BERHENTI"
+        statusLabel.TextColor3 = isRunning and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100)
+    end
+    if statsLabel then
+        statsLabel.Text = "Pick:"..stats.Pick.." | Place:"..stats.Place.." | Level:"..stats.Level.." | Gajah:"..stats.Elephant
+    end
+end
+
+-- ============ CREATE GUI ============
 local function CreateGUI()
     gui = Instance.new("ScreenGui")
     gui.Name = "LexsaGUI"
@@ -244,7 +242,7 @@ local function CreateGUI()
     close.Parent = frame
     close.MouseButton1Click:Connect(function() gui:Destroy() end)
     
-    -- Scan & Select All
+    -- Scan
     local scanBtn = Instance.new("TextButton")
     scanBtn.Size = UDim2.new(0,100,0,30)
     scanBtn.Position = UDim2.new(0,10,0,40)
@@ -258,6 +256,7 @@ local function CreateGUI()
     scanBtn.Parent = frame
     scanBtn.MouseButton1Click:Connect(function() ScanPets() end)
     
+    -- All
     local allBtn = Instance.new("TextButton")
     allBtn.Size = UDim2.new(0,80,0,30)
     allBtn.Position = UDim2.new(0,120,0,40)
@@ -277,6 +276,7 @@ local function CreateGUI()
         UpdatePetList()
     end)
     
+    -- None
     local noneBtn = Instance.new("TextButton")
     noneBtn.Size = UDim2.new(0,80,0,30)
     noneBtn.Position = UDim2.new(0,210,0,40)
@@ -296,7 +296,7 @@ local function CreateGUI()
         UpdatePetList()
     end)
     
-    -- Pet List
+    -- List
     listFrame = Instance.new("ScrollingFrame")
     listFrame.Size = UDim2.new(1,-10,0,160)
     listFrame.Position = UDim2.new(0,5,0,75)
@@ -408,29 +408,21 @@ local function CreateGUI()
     info.TextXAlignment = Enum.TextXAlignment.Left
     info.Parent = frame
     
-    -- Update status & stats
-    local oldToggle = Toggle
-    Toggle = function()
-        oldToggle()
-        statusLabel.Text = isRunning and "▶️ BERJALAN" or "⏹️ BERHENTI"
-        statusLabel.TextColor3 = isRunning and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100)
-        statsLabel.Text = "Pick:"..stats.Pick.." | Place:"..stats.Place.." | Level:"..stats.Level.." | Gajah:"..stats.Elephant
-    end
-    
-    task.spawn(function()
-        while true do
-            task.wait(2)
-            statsLabel.Text = "Pick:"..stats.Pick.." | Place:"..stats.Place.." | Level:"..stats.Level.." | Gajah:"..stats.Elephant
-        end
-    end)
-    
     -- Auto scan pertama
     task.wait(0.5)
     ScanPets()
+    
+    -- Update status tiap 2 detik
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            UpdateStatus()
+        end
+    end)
 end
 
 CreateGUI()
-print("🔮 LEXSA - FULL VERSION")
+print("🔮 LEXSA - FIX GUI")
 print("📌 Tekan 'R' untuk Scan Pet")
 print("📌 Klik pet di list untuk pilih")
 print("📌 Aktifkan toggle yang mau")
