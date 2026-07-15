@@ -1,253 +1,479 @@
--- ====================================================
--- LEXSA REJOIN V7 (ORIGINAL LOOK - ACCURATE ENGINE)
--- ====================================================
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local GuiService = game:GetService("GuiService")
-local VirtualUser = game:GetService("VirtualUser")
+-- ============================================
+-- SCRIPT LEXSA - GROW A GARDEN
+-- Berdasarkan GUI dari screenshot
+-- Fitur: Auto Pick, Place, Leveling, Elephant
+-- ============================================
 
-local FILE_CONFIG = "LexsaV7Config.txt"
-local ConfigSistem = {
-    Menit = 31,
-    Aktif = false,
-    LinkPS = ""
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- ============ KONFIGURASI ============
+local Config = {
+    -- Auto Pickup
+    AutoPickPet = false,
+    AutoPlacePet = false,
+    
+    -- Auto Leveling
+    AutoLeveling = false,
+    TargetLevel = 100,          -- Target level pet (dari screenshot)
+    MaxPetsInGarden = 50,       -- Max pets in garden
+    
+    -- Auto Elephant
+    AutoElephant = false,
+    TargetElephantLevel = 50,   -- Target level gajah
+    
+    -- Settings
+    PickRadius = 30,
+    PlaceRadius = 20,
+    PickupDelay = 0.5,
 }
 
-local function MuatKonfigurasi()
-    local sukses, isi = pcall(function() return readfile(FILE_CONFIG) end)
-    if sukses and isi then
-        local suksesDecode, data = pcall(function() return HttpService:JSONDecode(isi) end)
-        if suksesDecode and data then
-            ConfigSistem.Menit = tonumber(data.Menit) or 31
-            ConfigSistem.Aktif = data.Aktif or false
-            ConfigSistem.LinkPS = data.LinkPS or ""
+-- ============ VARIABEL ============
+local isRunning = false
+local totalPicked = 0
+local totalPlaced = 0
+local totalLeveled = 0
+local totalElephant = 0
+
+-- ============ FUNGSI CEK UMUR PET ============
+
+local function GetPetAge(pet)
+    local attributes = pet:FindFirstChild("Attributes")
+    if attributes then
+        local age = attributes:FindFirstChild("Age") or attributes:FindFirstChild("Level") or attributes:FindFirstChild("Umur")
+        if age then
+            return tonumber(age.Value) or 0
         end
     end
-end
-
-local function SimpanKonfigurasi()
-    pcall(function()
-        local dataString = HttpService:JSONEncode(ConfigSistem)
-        writefile(FILE_CONFIG, dataString)
-    end)
-end
-
-MuatKonfigurasi()
-
--- ====================================================
--- INTERFACE GRAFIS (PERSIS SEPERTI GAMBAR 1003570985.jpg)
--- ====================================================
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local CloseBtn = Instance.new("TextButton")
-local LabelMenit = Instance.new("TextLabel")
-local MinuteInput = Instance.new("TextBox")
-local LabelPS = Instance.new("TextLabel")
-local PSInput = Instance.new("TextBox")
-local ToggleBtn = Instance.new("TextButton")
-local ToggleUIBtn = Instance.new("TextButton")
-
-ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.ResetOnSpawn = false
-
--- Tombol MENU Melayang (Warna Hijau Toska Khas)
-ToggleUIBtn.Parent = ScreenGui
-ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-ToggleUIBtn.Position = UDim2.new(0, 10, 0, 10)
-ToggleUIBtn.Size = UDim2.new(0, 80, 0, 30)
-ToggleUIBtn.Text = "MENU"
-ToggleUIBtn.Font = Enum.Font.SourceSansBold
-ToggleUIBtn.TextColor3 = Color3.fromRGB(25, 25, 35)
-Instance.new("UICorner", ToggleUIBtn)
-
--- Frame Utama V7
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
-MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
-MainFrame.Size = UDim2.new(0, 240, 0, 230)
-MainFrame.Active = true
-MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame)
-
--- Title: LEXSA REJOIN V7
-Title.Parent = MainFrame
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 12, 0, 8)
-Title.Size = UDim2.new(0, 180, 0, 20)
-Title.Text = "LEXSA REJOIN V7"
-Title.Font = Enum.Font.SourceSansBold
-Title.TextColor3 = Color3.fromRGB(0, 255, 150)
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-
--- Tombol Close Minimalis (X)
-CloseBtn.Parent = MainFrame
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Position = UDim2.new(1, -30, 0, 8)
-CloseBtn.Size = UDim2.new(0, 20, 0, 20)
-CloseBtn.Text = "X"
-CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextColor3 = Color3.fromRGB(200, 50, 50)
-CloseBtn.TextSize = 14
-
--- Label Jeda Cek Rejoin
-LabelMenit.Parent = MainFrame
-LabelMenit.BackgroundTransparency = 1
-LabelMenit.Position = UDim2.new(0, 12, 0, 35)
-LabelMenit.Size = UDim2.new(0, 216, 0, 15)
-LabelMenit.Text = "Jeda Cek Rejoin (Menit):"
-LabelMenit.Font = Enum.Font.SourceSans
-LabelMenit.TextColor3 = Color3.fromRGB(180, 180, 190)
-LabelMenit.TextSize = 12
-LabelMenit.TextXAlignment = Enum.TextXAlignment.Left
-
--- Input Menit
-MinuteInput.Parent = MainFrame
-MinuteInput.BackgroundColor3 = Color3.fromRGB(30, 34, 45)
-MinuteInput.Position = UDim2.new(0, 12, 0, 52)
-MinuteInput.Size = UDim2.new(0, 216, 0, 28)
-MinuteInput.Text = tostring(ConfigSistem.Menit)
-MinuteInput.Font = Enum.Font.SourceSans
-MinuteInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinuteInput.TextSize = 14
-Instance.new("UICorner", MinuteInput)
-
--- Label Link PS
-LabelPS.Parent = MainFrame
-LabelPS.BackgroundTransparency = 1
-LabelPS.Position = UDim2.new(0, 12, 0, 88)
-LabelPS.Size = UDim2.new(0, 216, 0, 15)
-LabelPS.Text = "Link PS (HANYA RESMI ROBLOX):"
-LabelPS.Font = Enum.Font.SourceSans
-LabelPS.TextColor3 = Color3.fromRGB(180, 180, 190)
-LabelPS.TextSize = 12
-LabelPS.TextXAlignment = Enum.TextXAlignment.Left
-
--- Input Link PS
-PSInput.Parent = MainFrame
-PSInput.BackgroundColor3 = Color3.fromRGB(30, 34, 45)
-PSInput.Position = UDim2.new(0, 12, 0, 105)
-PSInput.Size = UDim2.new(0, 216, 0, 28)
-PSInput.Text = ConfigSistem.LinkPS
-PSInput.Font = Enum.Font.SourceSans
-PSInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-PSInput.TextSize = 12
-PSInput.TextTruncate = Enum.TextTruncate.AtEnd
-Instance.new("UICorner", PSInput)
-
--- Tombol Saklar Utama (STATUS: ON/OFF)
-ToggleBtn.Parent = MainFrame
-ToggleBtn.Position = UDim2.new(0, 12, 0, 145)
-ToggleBtn.Size = UDim2.new(0, 216, 0, 70)
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.TextSize = 18
-Instance.new("UICorner", ToggleBtn)
-
--- ====================================================
--- FUNGSI RENDER STATUS SAKLAR
--- ====================================================
-local function RenderUI()
-    if ConfigSistem.Aktif then
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(46, 125, 50) -- Hijau Pekat sesuai Gambar
-        ToggleBtn.Text = "STATUS: ON"
-    else
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40) -- Merah Pekat
-        ToggleBtn.Text = "STATUS: OFF"
+    
+    local stats = pet:FindFirstChild("Stats")
+    if stats then
+        local age = stats:FindFirstChild("Age") or stats:FindFirstChild("Level") or stats:FindFirstChild("Umur")
+        if age then
+            return tonumber(age.Value) or 0
+        end
     end
-    ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-end
-RenderUI()
-
--- ====================================================
--- INTERAKSI & OTO-SIMPAN KONFIGURASI
--- ====================================================
-MinuteInput:GetPropertyChangedSignal("Text"):Connect(function()
-    local angka = tonumber(MinuteInput.Text)
-    if angka then ConfigSistem.Menit = angka SimpanKonfigurasi() end
-end)
-
-PSInput:GetPropertyChangedSignal("Text"):Connect(function()
-    ConfigSistem.LinkPS = PSInput.Text
-    SimpanKonfigurasi()
-end)
-
-ToggleBtn.MouseButton1Click:Connect(function()
-    ConfigSistem.Aktif = not ConfigSistem.Aktif
-    SimpanKonfigurasi()
-    RenderUI()
-end)
-
-ToggleUIBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
-
--- ====================================================
--- CORE REJOIN ENGINE
--- ====================================================
-local function JalankanTeleport()
-    if not ConfigSistem.Aktif then return end
-    if ConfigSistem.LinkPS and ConfigSistem.LinkPS ~= "" then
-        local kodeLink = string.match(ConfigSistem.LinkPS, "privateServerLinkCode=(%d+)")
-        local linkFinal = "roblox://placeId=" .. game.PlaceId
-        if kodeLink then linkFinal = linkFinal .. "&privateServerLinkCode=" .. kodeLink end
-        
-        -- Bypass Emulator Link
-        pcall(function() game:GetService("HttpService"):GetAsync("http://localhost:1234/open?url=" .. linkFinal) end)
-        task.wait(2)
-        -- Fallback Teleport Internal
-        pcall(function() game:GetService("TeleportService"):ToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer) end)
-    else
-        pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer) end)
+    
+    local name = pet.Name
+    local levelMatch = name:match("Lv%.?(%d+)") or name:match("Level (%d+)") or name:match("(%d+)")
+    if levelMatch then
+        return tonumber(levelMatch) or 0
     end
+    
+    return 0
 end
 
--- DETEKSI DISCONNECT REAL-TIME (TICK ENGINE)
-local WaktuMulaiError = nil
+-- ============ FUNGSI CEK LEVEL GAJAH ============
 
-spawn(function()
-    while true do
-        task.wait(1) -- Monitoring super peka setiap detik
-        
-        if ConfigSistem.Aktif then
-            local promptGui = game:GetService("CoreGui"):FindFirstChild("RobloxPromptGui")
-            local adaError = promptGui and promptGui:FindFirstChild("promptOverlay") and #promptGui.promptOverlay:GetChildren() > 0
-            
-            if adaError then
-                if not WaktuMulaiError then
-                    WaktuMulaiError = tick()
-                    print("[LEXSA V7] Terdeteksi Putus Jaringan! Stopwatch dimulai...")
+local function GetElephantLevel()
+    local gui = Player:FindFirstChild("PlayerGui")
+    if gui then
+        for _, obj in pairs(gui:GetDescendants()) do
+            if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+                local name = obj.Name:lower()
+                if name:find("elephant") and name:find("level") then
+                    local text = obj.Text
+                    local levelMatch = text:match("Level%s*(%d+)") or text:match("Lv%.?(%d+)") or text:match("(%d+)")
+                    if levelMatch then
+                        return tonumber(levelMatch) or 0
+                    end
                 end
-                
-                local durasiError = tick() - WaktuMulaiError
-                local targetJeda = ConfigSistem.Menit * 60
-                
-                if durasiError >= targetJeda then
-                    print("[LEXSA V7] Waktu tunggu tercapai. Menghubungkan kembali...")
-                    WaktuMulaiError = nil
-                    JalankanTeleport()
-                    task.wait(10)
-                end
-            else
-                WaktuMulaiError = nil
             end
         end
     end
-end)
+    
+    local leaderstats = Player:FindFirstChild("leaderstats")
+    if leaderstats then
+        local elephantLevel = leaderstats:FindFirstChild("ElephantLevel") or leaderstats:FindFirstChild("Gajah")
+        if elephantLevel then
+            return tonumber(elephantLevel.Value) or 0
+        end
+    end
+    
+    return 0
+end
 
--- Backup Listener bawaan Roblox GUI
-GuiService.ErrorMessageChanged:Connect(function()
-    if ConfigSistem.Aktif then
-        task.wait(ConfigSistem.Menit * 60)
-        JalankanTeleport()
+-- ============ FUNGSI CARI PET ============
+
+local function FindPets()
+    local found = {}
+    local petCount = 0
+    
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") then
+            local name = obj.Name:lower()
+            if name:find("pet") or name:find("boo") or name:find("frandi") then
+                local dist = (HumanoidRootPart.Position - obj:GetPivot().Position).Magnitude
+                if dist <= Config.PickRadius then
+                    table.insert(found, obj)
+                    petCount = petCount + 1
+                end
+            end
+        end
+    end
+    
+    return found
+end
+
+local function FindPetAreas()
+    local areas = {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") and (obj.Name:lower():find("area") or obj.Name:lower():find("spot") or obj.Name:lower():find("garden") or obj.Name:lower():find("plot")) then
+            table.insert(areas, obj)
+        end
+    end
+    return areas
+end
+
+-- ============ AUTO PICK ============
+
+local function PickPet(pet)
+    if not pet then return false end
+    
+    local remotes = {"PickPet", "PetPick", "CollectPet", "GrabPet", "Pickup"}
+    for _, name in pairs(remotes) do
+        local remote = ReplicatedStorage:FindFirstChild(name)
+        if remote then
+            remote:FireServer(pet)
+            totalPicked = totalPicked + 1
+            return true
+        end
+    end
+    
+    local click = pet:FindFirstChild("ClickDetector")
+    if click then
+        click:Click(Player)
+        totalPicked = totalPicked + 1
+        return true
+    end
+    return false
+end
+
+-- ============ AUTO PLACE ============
+
+local function PlacePet(area)
+    if not area then return false end
+    
+    local remotes = {"PlacePet", "PetPlace", "DeployPet", "PutPet"}
+    for _, name in pairs(remotes) do
+        local remote = ReplicatedStorage:FindFirstChild(name)
+        if remote then
+            remote:FireServer(area)
+            totalPlaced = totalPlaced + 1
+            return true
+        end
+    end
+    return false
+end
+
+-- ============ AUTO LEVELING ============
+
+local function DoLeveling(pet)
+    if not pet then return false end
+    
+    local age = GetPetAge(pet)
+    
+    if age >= Config.TargetLevel then
+        return false
+    end
+    
+    local remotes = {"LevelUp", "UpgradePet", "PetLevel", "IncreaseLevel", "LevelUpPet"}
+    for _, name in pairs(remotes) do
+        local remote = ReplicatedStorage:FindFirstChild(name)
+        if remote then
+            remote:FireServer(pet)
+            totalLeveled = totalLeveled + 1
+            print("⬆️ Leveling: " .. age .. " → " .. (age + 1))
+            return true
+        end
+    end
+    
+    local gui = Player:FindFirstChild("PlayerGui")
+    if gui then
+        for _, obj in pairs(gui:GetDescendants()) do
+            if obj:IsA("TextButton") then
+                local name = obj.Name:lower()
+                if name:find("level") or name:find("upgrade") or name:find("enhance") then
+                    obj:Click()
+                    totalLeveled = totalLeveled + 1
+                    print("⬆️ Leveling: " .. age .. " → " .. (age + 1))
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
+-- ============ AUTO ELEPHANT ============
+
+local function DoElephant()
+    local currentLevel = GetElephantLevel()
+    
+    if currentLevel >= Config.TargetElephantLevel then
+        return false
+    end
+    
+    local remotes = {"CollectElephant", "ElephantCollect", "UpgradeElephant", "ElephantUpgrade", "Elephant"}
+    for _, name in pairs(remotes) do
+        local remote = ReplicatedStorage:FindFirstChild(name)
+        if remote then
+            remote:FireServer()
+            totalElephant = totalElephant + 1
+            print("🐘 Elephant: Level " .. currentLevel .. " → " .. (currentLevel + 1))
+            return true
+        end
+    end
+    
+    local gui = Player:FindFirstChild("PlayerGui")
+    if gui then
+        for _, obj in pairs(gui:GetDescendants()) do
+            if obj:IsA("TextButton") then
+                local name = obj.Name:lower()
+                if name:find("elephant") or name:find("gajah") or name:find("upgrade") then
+                    obj:Click()
+                    totalElephant = totalElephant + 1
+                    print("🐘 Elephant: Level " .. currentLevel .. " → " .. (currentLevel + 1))
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
+-- ============ MAIN LOOP ============
+
+local function AutoPickAndPlace()
+    -- Auto Pick
+    if Config.AutoPickPet then
+        local pets = FindPets()
+        for _, pet in pairs(pets) do
+            PickPet(pet)
+            task.wait(Config.PickupDelay)
+        end
+    end
+    
+    -- Auto Place
+    if Config.AutoPlacePet then
+        local areas = FindPetAreas()
+        for _, area in pairs(areas) do
+            PlacePet(area)
+            task.wait(Config.PickupDelay)
+        end
+    end
+end
+
+local function AutoLevelingPets()
+    if not Config.AutoLeveling then return end
+    
+    local pets = FindPets()
+    local petCount = #pets
+    
+    -- Cek max pets in garden
+    if petCount > Config.MaxPetsInGarden then
+        return
+    end
+    
+    for _, pet in pairs(pets) do
+        local age = GetPetAge(pet)
+        if age < Config.TargetLevel then
+            DoLeveling(pet)
+            task.wait(0.3)
+        end
+    end
+end
+
+local function AutoElephantLoop()
+    if not Config.AutoElephant then return end
+    
+    local currentLevel = GetElephantLevel()
+    if currentLevel < Config.TargetElephantLevel then
+        DoElephant()
+        task.wait(0.5)
+    end
+end
+
+-- ============ START / STOP ============
+
+local function StartScript()
+    if isRunning then return end
+    isRunning = true
+    
+    while isRunning do
+        AutoPickAndPlace()
+        AutoLevelingPets()
+        AutoElephantLoop()
+        task.wait(0.5)
+    end
+end
+
+local function StopScript()
+    isRunning = false
+end
+
+local function ToggleScript()
+    if isRunning then
+        StopScript()
+        print("❌ STOP | Pick: " .. totalPicked .. " | Place: " .. totalPlaced .. " | Level: " .. totalLeveled .. " | Elephant: " .. totalElephant)
+    else
+        totalPicked = 0
+        totalPlaced = 0
+        totalLeveled = 0
+        totalElephant = 0
+        StartScript()
+        print("✅ START")
+        print("🎯 Target Level Pet: " .. Config.TargetLevel)
+        print("🐘 Target Elephant: " .. Config.TargetElephantLevel)
+    end
+end
+
+-- ============ KEYBIND ============
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.X then
+        ToggleScript()
     end
 end)
 
--- ANTI-IDLE KICK
-Players.LocalPlayer.Idled:Connect(function()
-    if ConfigSistem.Aktif then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end
-end)
+-- ============ GUI ============
 
-print("[LEXSA] V7 Classic Rejoin Berhasil Dimuat!")
+local function CreateGUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "LexsaGUI"
+    screenGui.Parent = Player.PlayerGui
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 400, 0, 420)
+    mainFrame.Position = UDim2.new(0.02, 0, 0.1, 0)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
+    mainFrame.BackgroundTransparency = 0.1
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 35)
+    title.Text = "🔮 LEXSA - AUTO PET VIP-15"
+    title.TextColor3 = Color3.fromRGB(255, 200, 100)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBold
+    title.TextScaled = true
+    title.Parent = mainFrame
+    
+    -- Toggle functions
+    local function createToggle(text, configKey, yPos, default)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 320, 0, 30)
+        btn.Position = UDim2.new(0.5, -160, 0, yPos)
+        btn.Text = text .. " : " .. (default and "✅ ON" or "❌ OFF")
+        btn.BackgroundColor3 = default and Color3.fromRGB(0, 170, 80) or Color3.fromRGB(140, 40, 40)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextScaled = true
+        btn.BackgroundTransparency = 0.2
+        btn.Parent = mainFrame
+        
+        btn.MouseButton1Click:Connect(function()
+            Config[configKey] = not Config[configKey]
+            btn.Text = text .. " : " .. (Config[configKey] and "✅ ON" or "❌ OFF")
+            btn.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 170, 80) or Color3.fromRGB(140, 40, 40)
+        end)
+    end
+    
+    createToggle("🐾 Auto Pick Pet", "AutoPickPet", 45, false)
+    createToggle("🏠 Auto Place Pet", "AutoPlacePet", 80, false)
+    createToggle("⬆️ Auto Leveling (Target 100)", "AutoLeveling", 115, false)
+    createToggle("🐘 Auto Elephant (Target 50)", "AutoElephant", 150, false)
+    
+    -- Info Settings
+    local info1 = Instance.new("TextLabel")
+    info1.Size = UDim2.new(1, 0, 0, 22)
+    info1.Position = UDim2.new(0, 0, 0, 195)
+    info1.Text = "⚙️ Target Level Pet: " .. Config.TargetLevel
+    info1.TextColor3 = Color3.fromRGB(150, 200, 255)
+    info1.BackgroundTransparency = 1
+    info1.Font = Enum.Font.GothamBold
+    info1.TextScaled = true
+    info1.Parent = mainFrame
+    
+    local info2 = Instance.new("TextLabel")
+    info2.Size = UDim2.new(1, 0, 0, 22)
+    info2.Position = UDim2.new(0, 0, 0, 220)
+    info2.Text = "🐘 Target Elephant Level: " .. Config.TargetElephantLevel
+    info2.TextColor3 = Color3.fromRGB(255, 200, 100)
+    info2.BackgroundTransparency = 1
+    info2.Font = Enum.Font.GothamBold
+    info2.TextScaled = true
+    info2.Parent = mainFrame
+    
+    local info3 = Instance.new("TextLabel")
+    info3.Size = UDim2.new(1, 0, 0, 22)
+    info3.Position = UDim2.new(0, 0, 0, 245)
+    info3.Text = "📌 Tekan 'X' untuk Start/Stop"
+    info3.TextColor3 = Color3.fromRGB(200, 200, 200)
+    info3.BackgroundTransparency = 1
+    info3.Font = Enum.Font.GothamBold
+    info3.TextScaled = true
+    info3.Parent = mainFrame
+    
+    -- Status
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, 0, 0, 30)
+    status.Position = UDim2.new(0, 0, 0, 278)
+    status.Text = "⏹️ Status: BERHENTI"
+    status.TextColor3 = Color3.fromRGB(255, 100, 100)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.GothamBold
+    status.TextScaled = true
+    status.Parent = mainFrame
+    
+    -- Stats
+    local stats = Instance.new("TextLabel")
+    stats.Size = UDim2.new(1, 0, 0, 40)
+    stats.Position = UDim2.new(0, 0, 0, 320)
+    stats.Text = "Pick: 0 | Place: 0 | Level: 0 | Gajah: 0"
+    stats.TextColor3 = Color3.fromRGB(150, 200, 255)
+    stats.BackgroundTransparency = 1
+    stats.Font = Enum.Font.GothamBold
+    stats.TextScaled = true
+    stats.Parent = mainFrame
+    
+    -- Update
+    local oldToggle = ToggleScript
+    ToggleScript = function()
+        oldToggle()
+        status.Text = isRunning and "▶️ Status: BERJALAN" or "⏹️ Status: BERHENTI"
+        status.TextColor3 = isRunning and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
+        stats.Text = "Pick: " .. totalPicked .. " | Place: " .. totalPlaced .. " | Level: " .. totalLeveled .. " | Gajah: " .. totalElephant
+    end
+    
+    task.spawn(function()
+        while true do
+            task.wait(5)
+            stats.Text = "Pick: " .. totalPicked .. " | Place: " .. totalPlaced .. " | Level: " .. totalLeveled .. " | Gajah: " .. totalElephant
+        end
+    end)
+end
+
+-- ============ START ============
+
+CreateGUI()
+print("🔮 LEXSA - Auto Pet VIP-15")
+print("📌 Tekan 'X' untuk Start/Stop")
+print("🎯 Target Level Pet: " .. Config.TargetLevel)
+print("🐘 Target Elephant: " .. Config.TargetElephantLevel)
+
+Player.CharacterAdded:Connect(function(char)
+    Character = char
+    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+end)
