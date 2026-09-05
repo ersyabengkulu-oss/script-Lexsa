@@ -1,47 +1,253 @@
--- ============ 🎨 GUI KEREN — VERSI PREMIUM FIXED ============
+-- ============================================
+-- 🔮 LEXSA - GROW A GARDEN | FINAL VERSION
+-- ✅ Semua Bug Fixed | 🎨 UI Keren Modern
+-- Struktur: PetsPhysical.PetMover | Attributes.Age | OPTION_HOLDER
+-- ============================================
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- ✅ TUNGGU KARAKTER LOAD (FIX: error nil)
+local Character, HumanoidRootPart
+local function WaitForCharacter()
+    repeat
+        Character = Player.Character
+        if Character then HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart") end
+        task.wait(0.1)
+    until HumanoidRootPart
+end
+WaitForCharacter()
+Player.CharacterAdded:Connect(function(c)
+    Character = c
+    HumanoidRootPart = c:WaitForChild("HumanoidRootPart")
+end)
+
+-- ============ ⚙️ SETTINGS ============
+local Settings = {
+    Pick = false,
+    Place = false,
+    Level = false,
+    Elephant = false,
+    TargetAge = 50,
+    Radius = 50,
+    Delay = 0.35,
+    MaxProcess = 3,
+}
+
+-- ============ 📦 VARIABEL ============
+local isRunning = false
+local petList = {}
+local stats = {Pick=0, Place=0, Level=0, Elephant=0, Failed=0}
+local selectedPets = {}
+local processed = {}
+local gui, listFrame, statusLabel, statsLabel
+
+-- ✅ FUNGSI AMAN — Cek dulu sebelum ambil
+local function SafeFind(parent, name)
+    if not parent then return nil end
+    local ok, val = pcall(function() return parent:FindFirstChild(name) end)
+    return ok and val or nil
+end
+
+-- ✅ BACA AGE — kasih nilai default 0
+local function GetAge(pet)
+    if not pet then return 0 end
+    local attrs = SafeFind(pet, "Attributes")
+    if not attrs then return 0 end
+    local ageVal = SafeFind(attrs, "Age")
+    if ageVal then return tonumber(ageVal.Value) or 0 end
+    for _, c in pairs(attrs:GetChildren()) do
+        local n = c.Name:lower()
+        if n:find("age") or n:find("level") then
+            return tonumber(c.Value) or 0
+        end
+    end
+    return 0
+end
+
+-- ✅ SCAN PET — urut dari terdekat
+local function ScanPets()
+    if not HumanoidRootPart then return end
+    petList = {}
+    local pm = SafeFind(Workspace, "PetsPhysical")
+    if not pm then return end
+    local mover = SafeFind(pm, "PetMover")
+    if not mover then return end
+    
+    for _, f in pairs(mover:GetChildren()) do
+        if f:IsA("Folder") and f.Name:match("{(.-)}") then
+            local root = SafeFind(f, "RootPart_PetMover_WELD")
+            if root then
+                local dist = (HumanoidRootPart.Position - root.Position).Magnitude
+                if dist <= Settings.Radius then
+                    table.insert(petList, {
+                        id = f.Name,
+                        age = GetAge(f),
+                        pet = f,
+                        selected = selectedPets[f.Name] or false,
+                        dist = dist
+                    })
+                end
+            end
+        end
+    end
+    table.sort(petList, function(a,b) return a.dist < b.dist end)
+    processed = {}
+    UpdatePetList()
+end
+
+-- ✅ KLIK TOMBOL — pakai pcall biar gak error
+local function ClickBtn(name)
+    local petUI = SafeFind(PlayerGui, "PetUI")
+    if not petUI then return false end
+    local action = SafeFind(petUI, "PetActionUI")
+    if not action then return false end
+    local holder = SafeFind(action, "OPTION_HOLDER")
+    if not holder then return false end
+    local btn = SafeFind(holder, name)
+    if btn and btn:IsA("TextButton") then
+        pcall(function() btn:Click() end)
+        return true
+    end
+    return false
+end
+
+-- ✅ MAIN LOOP — urutan benar + anti-duplikat
+local function MainLoop()
+    local count = 0
+    for _, data in pairs(petList) do
+        if not data.selected then goto skip end
+        if count >= Settings.MaxProcess then break end
+        if processed[data.id] then goto skip end
+        
+        processed[data.id] = true
+        count += 1
+        
+        -- 🐾 PICK DULU
+        if Settings.Pick then
+            if ClickBtn("PickUp") then stats.Pick += 1 task.wait(Settings.Delay)
+            else stats.Failed += 1 end
+        end
+        -- 🏠 PLACE SETELAH PICK
+        if Settings.Place then
+            if ClickBtn("Place") then stats.Place += 1 task.wait(Settings.Delay)
+            else stats.Failed += 1 end
+        end
+        -- ⬆️ LEVEL
+        if Settings.Level and data.age < Settings.TargetAge then
+            if ClickBtn("LevelUp") then stats.Level += 1 task.wait(Settings.Delay)
+            else stats.Failed += 1 end
+        end
+        -- 🐘 ELEPHANT
+        if Settings.Elephant and data.age >= Settings.TargetAge then
+            if ClickBtn("Elephant") then stats.Elephant += 1 task.wait(Settings.Delay)
+            else stats.Failed += 1 end
+        end
+        
+        ::skip::
+    end
+end
+
+-- ✅ START / STOP
+local function Toggle()
+    isRunning = not isRunning
+    if isRunning then
+        stats = {Pick=0, Place=0, Level=0, Elephant=0, Failed=0}
+        processed = {}
+        print("✅ BERJALAN")
+        task.spawn(function()
+            while isRunning do MainLoop() task.wait(1.5) end
+        end)
+    else print("❌ BERHENTI") end
+    UpdateStatus()
+end
+
+-- ✅ KEYBIND
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.X then Toggle() end
+    if input.KeyCode == Enum.KeyCode.R then ScanPets() end
+end)
+
+-- ============ 🎨 GUI KEREN — VERSI PREMIUM ============
+function UpdatePetList()
+    if not listFrame then return end
+    for _, c in pairs(listFrame:GetChildren()) do c:Destroy() end
+    
+    if #petList == 0 then
+        local empty = Instance.new("TextLabel")
+        empty.Size = UDim2.new(1,0,0,40)
+        empty.Text = "Tekan R untuk Scan Pet"
+        empty.TextColor3 = Color3.fromRGB(150,150,180)
+        empty.BackgroundTransparency = 1
+        empty.Font = Enum.Font.Gotham
+        empty.TextSize = 15
+        empty.Parent = listFrame
+        listFrame.CanvasSize = UDim2.new(0,0,0,40)
+        return
+    end
+    
+    for i, d in pairs(petList) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1,-10,0,38)
+        btn.Position = UDim2.new(0,5,0,(i-1)*42)
+        local icon = d.age >= Settings.TargetAge and "🐘" or "⬆️"
+        btn.Text = (d.selected and "☑️" or "☐").." "..icon.." "..string.sub(d.id,2,12).."  |  Age: "..d.age
+        btn.BackgroundColor3 = d.selected and Color3.fromRGB(35,120,80) or Color3.fromRGB(40,45,70)
+        btn.TextColor3 = Color3.fromRGB(255,255,255)
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 14
+        btn.CornerRadius = UDim.new(0,8)
+        btn.AutoLocalize = false
+        btn.Parent = listFrame
+        btn.MouseButton1Click:Connect(function()
+            d.selected = not d.selected
+            selectedPets[d.id] = d.selected
+            UpdatePetList()
+        end)
+    end
+    listFrame.CanvasSize = UDim2.new(0,0,0,#petList*42+5)
+end
+
+function UpdateStatus()
+    if statusLabel then
+        statusLabel.Text = isRunning and "▶️ SEDANG BERJALAN" or "⏹️ BERHENTI — Tekan X untuk mulai"
+        statusLabel.TextColor3 = isRunning and Color3.fromRGB(80,220,120) or Color3.fromRGB(255,100,100)
+    end
+    if statsLabel then
+        statsLabel.Text = "📊 Pick:"..stats.Pick.."  |  Place:"..stats.Place.."  |  Level:"..stats.Level.."  |  Gajah:"..stats.Elephant.."  |  Gagal:"..stats.Failed
+    end
+end
+
 local function CreateGUI()
     gui = Instance.new("ScreenGui")
     gui.Name = "LexsaAutoPet"
     gui.Parent = PlayerGui
     gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     -- 🌙 BACKGROUND UTAMA
     local frame = Instance.new("Frame")
-    frame.Name = "MainFrame"
-    frame.Size = UDim2.new(0, 440, 0, 680)
+    frame.Size = UDim2.new(0, 440, 0, 600)
     frame.Position = UDim2.new(0.02, 0, 0.02, 0)
     frame.BackgroundColor3 = Color3.fromRGB(22, 24, 35)
     frame.BorderSizePixel = 0
+    frame.CornerRadius = UDim.new(0, 16)
     frame.ClipsDescendants = true
     frame.Parent = gui
 
-    -- ✨ SUDUT BULAT
-    local frameCorner = Instance.new("UICorner")
-    frameCorner.CornerRadius = UDim.new(0, 16)
-    frameCorner.Parent = frame
-
-    -- 🌟 BORDER / GLOW
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(60, 80, 220)
+    stroke.Color = Color3.fromRGB(70, 90, 230)
     stroke.Thickness = 1.5
-    stroke.Transparency = 0.7
+    stroke.Transparency = 0.6
     stroke.Parent = frame
 
     -- 🔶 HEADER
-    local header = Instance.new("Frame")
-    header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 55)
-    header.BackgroundColor3 = Color3.fromRGB(30, 34, 55)
-    header.BorderSizePixel = 0
-    header.Parent = frame
-
-    local headerCorner = Instance.new("UICorner")
-    headerCorner.CornerRadius = UDim.new(0, 16)
-    headerCorner.Parent = header
-
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -70, 1, 0)
+    title.Size = UDim2.new(1, -60, 0, 55)
     title.Position = UDim2.new(0, 20, 0, 0)
     title.Text = "🔮 LEXSA AUTO PET"
     title.TextColor3 = Color3.fromRGB(255, 215, 100)
@@ -49,11 +255,10 @@ local function CreateGUI()
     title.TextSize = 22
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.BackgroundTransparency = 1
-    title.Parent = header
+    title.Parent = frame
 
     -- ❌ TOMBOL TUTUP
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Name = "CloseButton"
     closeBtn.Size = UDim2.new(0, 36, 0, 36)
     closeBtn.Position = UDim2.new(1, -45, 0, 10)
     closeBtn.Text = "✕"
@@ -61,140 +266,87 @@ local function CreateGUI()
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.TextSize = 20
     closeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-    closeBtn.BackgroundTransparency = 0.5
-    closeBtn.BorderSizePixel = 0
-    closeBtn.Parent = header
-
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 8)
-    closeCorner.Parent = closeBtn
-
-    closeBtn.MouseButton1Click:Connect(function()
-        if gui then
-            gui:Destroy()
-        end
-    end)
+    closeBtn.CornerRadius = UDim.new(0, 8)
+    closeBtn.Parent = frame
+    closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
     -- 🔍 TOMBOL SCAN
     local scanBtn = Instance.new("TextButton")
-    scanBtn.Name = "ScanButton"
-    scanBtn.Size = UDim2.new(0, 140, 0, 40)
+    scanBtn.Size = UDim2.new(0, 140, 0, 42)
     scanBtn.Position = UDim2.new(0, 20, 0, 70)
     scanBtn.Text = "🔍 SCAN PET (R)"
     scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     scanBtn.Font = Enum.Font.GothamBold
     scanBtn.TextSize = 15
     scanBtn.BackgroundColor3 = Color3.fromRGB(45, 90, 220)
-    scanBtn.BorderSizePixel = 0
-    scanBtn.AutoLocalize = false
+    scanBtn.CornerRadius = UDim.new(0, 10)
     scanBtn.Parent = frame
-
-    local scanCorner = Instance.new("UICorner")
-    scanCorner.CornerRadius = UDim.new(0, 10)
-    scanCorner.Parent = scanBtn
-
-    scanBtn.MouseButton1Click:Connect(function()
-        ScanPets()
-    end)
+    scanBtn.MouseButton1Click:Connect(ScanPets)
 
     -- ☑️ PILIH SEMUA
     local allBtn = Instance.new("TextButton")
-    allBtn.Name = "SelectAllButton"
-    allBtn.Size = UDim2.new(0, 110, 0, 40)
+    allBtn.Size = UDim2.new(0, 115, 0, 42)
     allBtn.Position = UDim2.new(0, 175, 0, 70)
     allBtn.Text = "☑️ Pilih Semua"
     allBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     allBtn.Font = Enum.Font.GothamBold
     allBtn.TextSize = 14
     allBtn.BackgroundColor3 = Color3.fromRGB(35, 140, 80)
-    allBtn.BorderSizePixel = 0
+    allBtn.CornerRadius = UDim.new(0, 10)
     allBtn.Parent = frame
-
-    local allCorner = Instance.new("UICorner")
-    allCorner.CornerRadius = UDim.new(0, 10)
-    allCorner.Parent = allBtn
-
     allBtn.MouseButton1Click:Connect(function()
-        for _, v in pairs(petList) do
-            v.selected = true
-            selectedPets[v.id] = true
-        end
-
+        for _, v in pairs(petList) do v.selected = true; selectedPets[v.id] = true end
         UpdatePetList()
     end)
 
     -- ❌ BATAL
     local noneBtn = Instance.new("TextButton")
-    noneBtn.Name = "DeselectAllButton"
-    noneBtn.Size = UDim2.new(0, 90, 0, 40)
+    noneBtn.Size = UDim2.new(0, 95, 0, 42)
     noneBtn.Position = UDim2.new(0, 295, 0, 70)
     noneBtn.Text = "❌ Batal"
     noneBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     noneBtn.Font = Enum.Font.GothamBold
     noneBtn.TextSize = 14
     noneBtn.BackgroundColor3 = Color3.fromRGB(160, 50, 50)
-    noneBtn.BorderSizePixel = 0
+    noneBtn.CornerRadius = UDim.new(0, 10)
     noneBtn.Parent = frame
-
-    local noneCorner = Instance.new("UICorner")
-    noneCorner.CornerRadius = UDim.new(0, 10)
-    noneCorner.Parent = noneBtn
-
     noneBtn.MouseButton1Click:Connect(function()
-        for _, v in pairs(petList) do
-            v.selected = false
-            selectedPets[v.id] = false
-        end
-
+        for _, v in pairs(petList) do v.selected = false; selectedPets[v.id] = false end
         UpdatePetList()
     end)
 
     -- 📋 LIST PET
     local listBg = Instance.new("Frame")
-    listBg.Name = "PetListBackground"
-    listBg.Size = UDim2.new(1, -40, 0, 200)
-    listBg.Position = UDim2.new(0, 20, 0, 125)
+    listBg.Size = UDim2.new(1, -40, 0, 210)
+    listBg.Position = UDim2.new(0, 20, 0, 130)
     listBg.BackgroundColor3 = Color3.fromRGB(30, 34, 50)
-    listBg.BorderSizePixel = 0
+    listBg.CornerRadius = UDim.new(0, 12)
     listBg.Parent = frame
 
-    local listCorner = Instance.new("UICorner")
-    listCorner.CornerRadius = UDim.new(0, 12)
-    listCorner.Parent = listBg
-
     listFrame = Instance.new("ScrollingFrame")
-    listFrame.Name = "PetList"
     listFrame.Size = UDim2.new(1, -20, 1, -10)
     listFrame.Position = UDim2.new(0, 10, 0, 5)
     listFrame.BackgroundTransparency = 1
-    listFrame.BorderSizePixel = 0
-    listFrame.ScrollBarThickness = 4
+    listFrame.ScrollBarThickness = 5
     listFrame.ScrollBarColor3 = Color3.fromRGB(80, 100, 220)
     listFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     listFrame.Parent = listBg
 
     -- 🎯 GARIS PEMISAH
     local line = Instance.new("Frame")
-    line.Name = "Separator"
     line.Size = UDim2.new(1, -40, 0, 1)
-    line.Position = UDim2.new(0, 20, 0, 345)
+    line.Position = UDim2.new(0, 20, 0, 360)
     line.BackgroundColor3 = Color3.fromRGB(50, 55, 80)
-    line.BorderSizePixel = 0
     line.Parent = frame
 
     -- ⚙️ TOGGLE SETTING
     local function makeToggle(text, key, y, color)
         local bg = Instance.new("Frame")
-        bg.Name = key .. "Toggle"
-        bg.Size = UDim2.new(1, -40, 0, 50)
+        bg.Size = UDim2.new(1, -40, 0, 52)
         bg.Position = UDim2.new(0, 20, 0, y)
         bg.BackgroundColor3 = Color3.fromRGB(30, 34, 50)
-        bg.BorderSizePixel = 0
+        bg.CornerRadius = UDim.new(0, 10)
         bg.Parent = frame
-
-        local bgCorner = Instance.new("UICorner")
-        bgCorner.CornerRadius = UDim.new(0, 10)
-        bgCorner.Parent = bg
 
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(0.6, 0, 1, 0)
@@ -208,45 +360,31 @@ local function CreateGUI()
         lbl.Parent = bg
 
         local btn = Instance.new("TextButton")
-        btn.Name = "ToggleButton"
-        btn.Size = UDim2.new(0, 90, 0, 34)
-        btn.Position = UDim2.new(1, -105, 0.5, -17)
-        btn.Text = Settings[key] and "ON" or "OFF"
+        btn.Size = UDim2.new(0, 95, 0, 36)
+        btn.Position = UDim2.new(1, -110, 0.5, -18)
+        btn.Text = "OFF"
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = 15
-        btn.BackgroundColor3 = Settings[key]
-            and color
-            or Color3.fromRGB(80, 35, 35)
-        btn.BorderSizePixel = 0
-        btn.AutoLocalize = false
+        btn.BackgroundColor3 = Color3.fromRGB(80, 35, 35)
+        btn.CornerRadius = UDim.new(0, 8)
         btn.Parent = bg
-
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
-
         btn.MouseButton1Click:Connect(function()
             Settings[key] = not Settings[key]
-
             btn.Text = Settings[key] and "ON" or "OFF"
-            btn.BackgroundColor3 = Settings[key]
-                and color
-                or Color3.fromRGB(80, 35, 35)
+            btn.BackgroundColor3 = Settings[key] and color or Color3.fromRGB(80, 35, 35)
         end)
     end
 
-    -- ⚙️ SETTINGS
-    makeToggle("🐾 Pick Pet", "Pick", 360, Color3.fromRGB(35, 120, 200))
-    makeToggle("🏠 Place Pet", "Place", 415, Color3.fromRGB(35, 140, 80))
-    makeToggle("⬆️ Level Up (→50)", "Level", 470, Color3.fromRGB(180, 120, 30))
-    makeToggle("🐘 Elephant (50+)", "Elephant", 525, Color3.fromRGB(180, 80, 140))
+    makeToggle("🐾 Pick Pet", "Pick", 370, Color3.fromRGB(35, 120, 200))
+    makeToggle("🏠 Place Pet", "Place", 427, Color3.fromRGB(35, 140, 80))
+    makeToggle("⬆️ Level Up (→50)", "Level", 484, Color3.fromRGB(180, 120, 30))
+    makeToggle("🐘 Elephant (50+)", "Elephant", 541, Color3.fromRGB(180, 80, 140))
 
     -- 📊 STATUS
     statusLabel = Instance.new("TextLabel")
-    statusLabel.Name = "Status"
     statusLabel.Size = UDim2.new(1, -40, 0, 28)
-    statusLabel.Position = UDim2.new(0, 20, 0, 585)
+    statusLabel.Position = UDim2.new(0, 20, 0, 565)
     statusLabel.Text = "⏹️ BERHENTI — Tekan X untuk mulai"
     statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     statusLabel.Font = Enum.Font.GothamBold
@@ -255,12 +393,10 @@ local function CreateGUI()
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     statusLabel.Parent = frame
 
-    -- 📊 STATS
     statsLabel = Instance.new("TextLabel")
-    statsLabel.Name = "Stats"
     statsLabel.Size = UDim2.new(1, -40, 0, 22)
-    statsLabel.Position = UDim2.new(0, 20, 0, 618)
-    statsLabel.Text = "📊 Pick:0 | Place:0 | Level:0 | Gajah:0 | Gagal:0"
+    statsLabel.Position = UDim2.new(0, 20, 0, 592)
+    statsLabel.Text = "📊 Pick:0  |  Place:0  |  Level:0  |  Gajah:0  |  Gagal:0"
     statsLabel.TextColor3 = Color3.fromRGB(150, 180, 220)
     statsLabel.Font = Enum.Font.Gotham
     statsLabel.TextSize = 13
@@ -270,10 +406,9 @@ local function CreateGUI()
 
     -- 📌 INFO
     local info = Instance.new("TextLabel")
-    info.Name = "Info"
     info.Size = UDim2.new(1, -40, 0, 20)
-    info.Position = UDim2.new(0, 20, 0, 650)
-    info.Text = "⌨️ X = Start/Stop  |  R = Scan Ulang"
+    info.Position = UDim2.new(0, 20, 0, 615)
+    info.Text = "⌨️ X = Start/Stop  |  R = Scan Ulang  |  Hasil ngulik kamu ✅"
     info.TextColor3 = Color3.fromRGB(120, 120, 150)
     info.Font = Enum.Font.Gotham
     info.TextSize = 12
@@ -281,10 +416,10 @@ local function CreateGUI()
     info.TextXAlignment = Enum.TextXAlignment.Left
     info.Parent = frame
 
-    -- 🔍 SCAN PERTAMA
     task.wait(0.5)
-
-    if gui and gui.Parent then
-        ScanPets()
-    end
+    ScanPets()
 end
+
+CreateGUI()
+print("✅ LEXSA — FINAL VERSION SIAP PAKAI!")
+print("📌 X=Start/Stop  |  R=Scan")
