@@ -1,5 +1,5 @@
 -- ============================================
--- LEXSA - GROW A GARDEN (HASIL ULEK DEX)
+-- LEXSA - GROW A GARDEN (FIXED VERSION)
 -- Struktur: PetsPhysical.PetMover | Attributes.Age | OPTION_HOLDER
 -- ============================================
 
@@ -8,8 +8,6 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
 -- ============ SETTINGS ============
 local Settings = {
@@ -31,10 +29,15 @@ local listFrame = nil
 local statusLabel = nil
 local statsLabel = nil
 
+-- ============ FUNGSI AMBIL HRT (FIX ANTI-RESPAWN ERROR) ============
+local function GetRoot()
+    local char = Player.Character or Player.CharacterAdded:Wait()
+    return char:FindFirstChild("HumanoidRootPart")
+end
+
 -- ============ FUNGSI SCAN PET (DARI STRUKTUR DEX) ============
 local function GetAge(pet)
     if not pet then return 0 end
-    -- Ini dari ulek Dex: pet.Attributes.Age
     local attrs = pet:FindFirstChild("Attributes")
     if attrs then
         for _, c in pairs(attrs:GetChildren()) do
@@ -47,112 +50,6 @@ local function GetAge(pet)
     return 0
 end
 
-local function ScanPets()
-    petList = {}
-    -- Ini dari ulek Dex: Workspace.PetsPhysical.PetMover
-    local pm = Workspace:FindFirstChild("PetsPhysical")
-    if not pm then return end
-    
-    local mover = pm:FindFirstChild("PetMover")
-    if mover then
-        for _, f in pairs(mover:GetChildren()) do
-            -- Ini dari ulek Dex: folder GUID {xxxx-xxxx}
-            if f:IsA("Folder") and f.Name:match("{(.-)}") then
-                -- Ini dari ulek Dex: RootPart_PetMover_WELD
-                local root = f:FindFirstChild("RootPart_PetMover_WELD")
-                if root then
-                    local dist = (HumanoidRootPart.Position - root.Position).Magnitude
-                    if dist <= Settings.Radius then
-                        table.insert(petList, {
-                            id = f.Name,
-                            age = GetAge(f),
-                            pet = f,
-                            selected = selectedPets[f.Name] or false
-                        })
-                    end
-                end
-            end
-        end
-    end
-    UpdatePetList()
-end
-
--- ============ FUNGSI KLIK TOMBOL (DARI STRUKTUR DEX) ============
-local function ClickButton(name)
-    -- Ini dari ulek Dex: PlayerGui.PetUI.PetActionUI.OPTION_HOLDER
-    local petUI = Player.PlayerGui:FindFirstChild("PetUI")
-    if not petUI then return false end
-    local action = petUI:FindFirstChild("PetActionUI")
-    if not action then return false end
-    local holder = action:FindFirstChild("OPTION_HOLDER")
-    if not holder then return false end
-    local btn = holder:FindFirstChild(name)
-    if btn and btn:IsA("TextButton") then
-        btn:Click()
-        return true
-    end
-    return false
-end
-
--- ============ MAIN LOOP ============
-local function MainLoop()
-    for _, data in pairs(petList) do
-        if not data.selected then goto skip end
-        
-        if Settings.Pick then
-            if ClickButton("PickUp") then stats.Pick = stats.Pick + 1 end
-            task.wait(0.15)
-        end
-        
-        if Settings.Place then
-            if ClickButton("Place") then stats.Place = stats.Place + 1 end
-            task.wait(0.15)
-        end
-        
-        if Settings.Level and data.age < Settings.TargetAge then
-            if ClickButton("LevelUp") then 
-                stats.Level = stats.Level + 1
-                data.age = data.age + 1
-            end
-            task.wait(0.25)
-        end
-        
-        if Settings.Elephant and data.age >= Settings.TargetAge then
-            if ClickButton("Elephant") then 
-                stats.Elephant = stats.Elephant + 1
-                data.age = 1
-            end
-            task.wait(0.4)
-        end
-        
-        ::skip::
-    end
-end
-
--- ============ START / STOP ============
-local function Toggle()
-    isRunning = not isRunning
-    if isRunning then
-        stats = {Pick=0, Place=0, Level=0, Elephant=0}
-        print("✅ START")
-        while isRunning do
-            MainLoop()
-            task.wait(1)
-        end
-    else
-        print("❌ STOP | Pick:"..stats.Pick.." Place:"..stats.Place.." Level:"..stats.Level.." Elephant:"..stats.Elephant)
-    end
-    UpdateStatus()
-end
-
--- ============ KEYBIND ============
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.X then Toggle() end
-    if input.KeyCode == Enum.KeyCode.R then ScanPets() end
-end)
-
--- ============ GUI ============
 local function UpdatePetList()
     if not listFrame then return end
     for _, c in pairs(listFrame:GetChildren()) do
@@ -200,6 +97,103 @@ local function UpdatePetList()
     listFrame.CanvasSize = UDim2.new(0,0,0,#petList*28+10)
 end
 
+local function ScanPets()
+    petList = {}
+    local hrp = GetRoot()
+    if not hrp then return end
+
+    local pm = Workspace:FindFirstChild("PetsPhysical")
+    if not pm then return end
+    
+    local mover = pm:FindFirstChild("PetMover")
+    if mover then
+        for _, f in pairs(mover:GetChildren()) do
+            if f:IsA("Folder") and f.Name:match("{(.-)}") then
+                local root = f:FindFirstChild("RootPart_PetMover_WELD") or f:FindFirstChildWhichIsA("BasePart")
+                if root then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist <= Settings.Radius then
+                        table.insert(petList, {
+                            id = f.Name,
+                            age = GetAge(f),
+                            pet = f,
+                            selected = selectedPets[f.Name] or false
+                        })
+                    end
+                end
+            end
+        end
+    end
+    UpdatePetList()
+end
+
+-- ============ FUNGSI KLIK TOMBOL (FIX BUG btn:Click()) ============
+local function ClickButton(name)
+    local success, result = pcall(function()
+        local petUI = Player.PlayerGui:FindFirstChild("PetUI")
+        if not petUI then return false end
+        local action = petUI:FindFirstChild("PetActionUI")
+        if not action then return false end
+        local holder = action:FindFirstChild("OPTION_HOLDER")
+        if not holder then return false end
+        
+        local btn = holder:FindFirstChild(name)
+        if btn and btn:IsA("TextButton") then
+            if getconnections then
+                for _, connection in pairs(getconnections(btn.MouseButton1Click)) do
+                    connection:Fire()
+                end
+                for _, connection in pairs(getconnections(btn.Activated)) do
+                    connection:Fire()
+                end
+            elseif firesignal then
+                firesignal(btn.MouseButton1Click)
+                firesignal(btn.Activated)
+            end
+            return true
+        end
+        return false
+    end)
+    return success and result
+end
+
+-- ============ MAIN LOOP ============
+local function MainLoop()
+    for _, data in pairs(petList) do
+        if not isRunning then break end
+        if not data.selected or not data.pet or not data.pet.Parent then goto skip end
+        
+        data.age = GetAge(data.pet)
+        
+        if Settings.Pick then
+            if ClickButton("PickUp") then stats.Pick = stats.Pick + 1 end
+            task.wait(0.15)
+        end
+        
+        if Settings.Place then
+            if ClickButton("Place") then stats.Place = stats.Place + 1 end
+            task.wait(0.15)
+        end
+        
+        if Settings.Level and data.age < Settings.TargetAge then
+            if ClickButton("LevelUp") then 
+                stats.Level = stats.Level + 1
+            end
+            task.wait(0.25)
+        end
+        
+        if Settings.Elephant and data.age >= Settings.TargetAge then
+            if ClickButton("Elephant") then 
+                stats.Elephant = stats.Elephant + 1
+            end
+            task.wait(0.4)
+        end
+        
+        ::skip::
+    end
+end
+
+-- ============ STATUS GUI ============
 local function UpdateStatus()
     if statusLabel then
         statusLabel.Text = isRunning and "▶️ BERJALAN" or "⏹️ BERHENTI"
@@ -210,7 +204,38 @@ local function UpdateStatus()
     end
 end
 
+-- ============ START / STOP ============
+local function Toggle()
+    isRunning = not isRunning
+    if isRunning then
+        stats = {Pick=0, Place=0, Level=0, Elephant=0}
+        print("✅ START")
+        task.spawn(function()
+            while isRunning do
+                ScanPets()
+                MainLoop()
+                task.wait(0.5)
+            end
+        end)
+    else
+        print("❌ STOP | Pick:"..stats.Pick.." Place:"..stats.Place.." Level:"..stats.Level.." Elephant:"..stats.Elephant)
+    end
+    UpdateStatus()
+end
+
+-- ============ KEYBIND ============
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.X then Toggle() end
+    if input.KeyCode == Enum.KeyCode.R then ScanPets() end
+end)
+
+-- ============ CREATE GUI ============
 local function CreateGUI()
+    if Player.PlayerGui:FindFirstChild("LexsaGUI") then
+        Player.PlayerGui.LexsaGUI:Destroy()
+    end
+
     gui = Instance.new("ScreenGui")
     gui.Name = "LexsaGUI"
     gui.Parent = Player.PlayerGui
@@ -223,12 +248,14 @@ local function CreateGUI()
     frame.BackgroundTransparency = 0.05
     frame.BorderSizePixel = 0
     frame.ClipsDescendants = true
+    frame.Active = true
+    frame.Draggable = true
     frame.Parent = gui
     
     -- Title
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1,0,0,35)
-    title.Text = "🔮 LEXSA AUTO PET"
+    title.Text = "🔮 LEXSA AUTO PET (FIXED)"
     title.TextColor3 = Color3.fromRGB(255,200,100)
     title.BackgroundTransparency = 1
     title.Font = Enum.Font.GothamBold
@@ -245,7 +272,10 @@ local function CreateGUI()
     close.Font = Enum.Font.GothamBold
     close.TextScaled = true
     close.Parent = frame
-    close.MouseButton1Click:Connect(function() gui:Destroy() end)
+    close.MouseButton1Click:Connect(function() 
+        isRunning = false
+        gui:Destroy() 
+    end)
     
     -- Scan
     local scanBtn = Instance.new("TextButton")
@@ -328,8 +358,8 @@ local function CreateGUI()
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0.3,0,0,26)
         btn.Position = UDim2.new(0.65,0,0,y)
-        btn.Text = "OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(150,40,40)
+        btn.Text = Settings[key] and "ON" or "OFF"
+        btn.BackgroundColor3 = Settings[key] and Color3.fromRGB(0,180,80) or Color3.fromRGB(150,40,40)
         btn.TextColor3 = Color3.fromRGB(255,255,255)
         btn.Font = Enum.Font.GothamBold
         btn.TextScaled = true
@@ -364,7 +394,7 @@ local function CreateGUI()
     local tBox = Instance.new("TextBox")
     tBox.Size = UDim2.new(0.15,0,0,25)
     tBox.Position = UDim2.new(0.27,0,0,380)
-    tBox.Text = "50"
+    tBox.Text = tostring(Settings.TargetAge)
     tBox.TextColor3 = Color3.fromRGB(255,255,255)
     tBox.BackgroundColor3 = Color3.fromRGB(30,30,60)
     tBox.BackgroundTransparency = 0.3
@@ -413,23 +443,16 @@ local function CreateGUI()
     info.TextXAlignment = Enum.TextXAlignment.Left
     info.Parent = frame
     
-    -- Auto scan pertama
     task.wait(0.5)
     ScanPets()
     
-    -- Update status tiap 2 detik
     task.spawn(function()
-        while true do
-            task.wait(2)
+        while gui and gui.Parent do
+            task.wait(1)
             UpdateStatus()
         end
     end)
 end
 
 CreateGUI()
-print("🔮 LEXSA - HASIL ULEK DEX")
-print("📌 Struktur: PetsPhysical.PetMover | Attributes.Age | OPTION_HOLDER")
-print("📌 Tekan 'R' untuk Scan Pet")
-print("📌 Klik pet di list untuk pilih")
-print("📌 Aktifkan toggle yang mau")
-print("📌 Tekan 'X' untuk Start/Stop")
+print("🔮 LEXSA - HASIL FIX READY!")
