@@ -1,258 +1,162 @@
 -- ==============================================
--- WAYPOINT SYSTEM — VERSI GUI (KAYAK INFINITE YIELD)
--- KLIK TOMBOL AJA, GA PERLU NGETIK COMMAND!
+-- WAYPOINT SYSTEM — BISA ARCEUS X + DELTA!
+-- TINGGAL PASTE → EXECUTE → LANGSUNG MUNCUL!
 -- ==============================================
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local TweenService = game:GetService("TweenService")
 
-local Character, HumanoidRootPart
+-- HAPUS JIKA SUDAH ADA (BIAR GA DOUBLE)
+if PlayerGui:FindFirstChild("WaypointSystem") then
+    PlayerGui:FindFirstChild("WaypointSystem"):Destroy()
+end
 
--- PENYIMPANAN WAYPOINT
 local Waypoints = {}
-local AutoLoopRunning = false
-local AutoLoopThread = nil
+local Character, RootPart
 
--- UPDATE KARAKTER
-local function UpdateCharacter()
+-- UPDATE POSISI KARAKTER
+local function UpdateChar()
     Character = LocalPlayer.Character
     if Character then
-        HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+        RootPart = Character:FindFirstChild("HumanoidRootPart")
     end
 end
-UpdateCharacter()
-LocalPlayer.CharacterAdded:Connect(UpdateCharacter)
+UpdateChar()
+LocalPlayer.CharacterAdded:Connect(UpdateChar)
 
 -- ==============================================
--- 🎨 BUAT GUI / MENU — PERSIS KAYAK INFINITE YIELD
+-- 🎨 BUAT GUI — KIRI ATAS, BISA DI SERET!
 -- ==============================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "WaypointSystem"
 ScreenGui.Parent = PlayerGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false -- TETAP ADA WALAU RESPAWN!
 
 -- JENDELA UTAMA
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 280, 0, 400)
-MainFrame.Position = UDim2.new(0.02, 0, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-MainFrame.BorderSizePixel = 0
-MainFrame.CornerRadius = UDim.new(0, 8)
-MainFrame.Parent = ScreenGui
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 250, 0, 350)
+Main.Position = UDim2.new(0.02, 0, 0.05, 0)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Main.BorderSizePixel = 2
+Main.BorderColor3 = Color3.fromRGB(60, 120, 255)
+Main.Active = true
+Main.Draggable = true -- BISA DI SERET KE MANA AJA!
+Main.Parent = ScreenGui
 
 -- JUDUL
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 35)
-TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-TitleBar.CornerRadius = UDim.new(0, 8)
-TitleBar.Parent = MainFrame
-
 local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -30, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "📍 Waypoint System"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(60, 120, 255)
+Title.Text = "📍 WAYPOINT SYSTEM"
+Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TitleBar
+Title.Parent = Main
 
--- AREA DAFTAR WAYPOINT (BISA SCROLL)
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Name = "ScrollingFrame"
-ScrollingFrame.Size = UDim2.new(1, -16, 1, 130)
-ScrollingFrame.Position = UDim2.new(0, 8, 0, 45)
-ScrollingFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-ScrollingFrame.CornerRadius = UDim.new(0, 6)
-ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.Parent = MainFrame
+-- AREA DAFTAR WAYPOINT
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -10, 0, 200)
+Scroll.Position = UDim2.new(0, 5, 0, 45)
+Scroll.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+Scroll.ScrollBarThickness = 5
+Scroll.Parent = Main
 
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.Padding = UDim.new(0, 6)
-ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-ListLayout.Parent = ScrollingFrame
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 5)
+Layout.Parent = Scroll
 
--- INPUT NAMA WAYPOINT
-local NameInput = Instance.new("TextBox")
-NameInput.Name = "NameInput"
-NameInput.Size = UDim2.new(1, -16, 0, 35)
-NameInput.Position = UDim2.new(0, 8, 1, -115)
-NameInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-NameInput.CornerRadius = UDim.new(0, 6)
-NameInput.Text = "Ketik nama waypoint..."
-NameInput.PlaceholderText = "Contoh: Kebun, Bank, dll"
-NameInput.TextColor3 = Color3.fromRGB(200, 200, 200)
-NameInput.Font = Enum.Font.Gotham
-NameInput.TextSize = 12
-NameInput.Parent = MainFrame
+-- KOTAK NAMA WAYPOINT
+local NamaInput = Instance.new("TextBox")
+NamaInput.Size = UDim2.new(1, -10, 0, 30)
+NamaInput.Position = UDim2.new(0, 5, 0, 250)
+NamaInput.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+NamaInput.Text = "Ketik nama waypoint..."
+NamaInput.TextColor3 = Color3.new(1,1,1)
+NamaInput.Font = Enum.Font.Gotham
+NamaInput.TextSize = 12
+NamaInput.Parent = Main
 
--- TOMBOL SIMPAN WAYPOINT
-local SaveBtn = Instance.new("TextButton")
-SaveBtn.Name = "SaveBtn"
-SaveBtn.Size = UDim2.new(1, -16, 0, 35)
-SaveBtn.Position = UDim2.new(0, 8, 1, -70)
-SaveBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
-SaveBtn.CornerRadius = UDim.new(0, 6)
-SaveBtn.Text = "✅ SIMPAN WAYPOINT SEKARANG"
-SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SaveBtn.Font = Enum.Font.GothamBold
-SaveBtn.TextSize = 13
-SaveBtn.AutoLocalize = false
-SaveBtn.Parent = MainFrame
+-- TOMBOL SIMPAN
+local BtnSave = Instance.new("TextButton")
+BtnSave.Size = UDim2.new(1, -10, 0, 30)
+BtnSave.Position = UDim2.new(0, 5, 0, 285)
+BtnSave.BackgroundColor3 = Color3.fromRGB(40, 180, 90)
+BtnSave.Text = "✅ SIMPAN POSISI"
+BtnSave.TextColor3 = Color3.new(1,1,1)
+BtnSave.Font = Enum.Font.GothamBold
+BtnSave.Parent = Main
 
 -- TOMBOL HAPUS SEMUA
-local ClearAllBtn = Instance.new("TextButton")
-ClearAllBtn.Name = "ClearAllBtn"
-ClearAllBtn.Size = UDim2.new(0.47, 0, 0, 30)
-ClearAllBtn.Position = UDim2.new(0.5, -4, 1, -35)
-ClearAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-ClearAllBtn.CornerRadius = UDim.new(0, 6)
-ClearAllBtn.Text = "🗑️ HAPUS SEMUA"
-ClearAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ClearAllBtn.Font = Enum.Font.GothamBold
-ClearAllBtn.TextSize = 11
-ClearAllBtn.AutoLocalize = false
-ClearAllBtn.Parent = MainFrame
-
--- TOMBOL STOP LOOP
-local StopBtn = Instance.new("TextButton")
-StopBtn.Name = "StopBtn"
-StopBtn.Size = UDim2.new(0.47, 0, 0, 30)
-StopBtn.Position = UDim2.new(0, 4, 1, -35)
-StopBtn.BackgroundColor3 = Color3.fromRGB(180, 120, 40)
-StopBtn.CornerRadius = UDim.new(0, 6)
-StopBtn.Text = "🛑 STOP"
-StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopBtn.Font = Enum.Font.GothamBold
-StopBtn.TextSize = 11
-StopBtn.AutoLocalize = false
-StopBtn.Parent = MainFrame
+local BtnClear = Instance.new("TextButton")
+BtnClear.Size = UDim2.new(1, -10, 0, 30)
+BtnClear.Position = UDim2.new(0, 5, 0, 320)
+BtnClear.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+BtnClear.Text = "🗑️ HAPUS SEMUA"
+BtnClear.TextColor3 = Color3.new(1,1,1)
+BtnClear.Font = Enum.Font.GothamBold
+BtnClear.Parent = Main
 
 -- ==============================================
--- 🔧 FUNGSI: UPDATE DAFTAR WAYPOINT DI GUI
+-- 🔧 UPDATE DAFTAR WAYPOINT
 -- ==============================================
-local function UpdateWaypointList()
-    -- HAPUS SEMUA ITEM LAMA
-    for _, child in ipairs(ScrollingFrame:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
+local function Refresh()
+    -- HAPUS ITEM LAMA
+    for _, c in ipairs(Scroll:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
     end
     
-    -- TAMBAHKAN SETIAP WAYPOINT
-    for nomor, data in pairs(Waypoints) do
-        local ItemFrame = Instance.new("Frame")
-        ItemFrame.Size = UDim2.new(0.95, 0, 0, 40)
-        ItemFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        ItemFrame.CornerRadius = UDim.new(0, 6)
-        ItemFrame.Parent = ScrollingFrame
+    -- TAMBAH SETIAP WAYPOINT
+    for no, data in pairs(Waypoints) do
+        local Item = Instance.new("Frame")
+        Item.Size = UDim2.new(1, -10, 0, 35)
+        Item.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        Item.Parent = Scroll
         
-        local NomorText = Instance.new("TextLabel")
-        NomorText.Size = UDim2.new(0, 30, 1, 0)
-        NomorText.Position = UDim2.new(0, 5, 0, 0)
-        NomorText.BackgroundTransparency = 1
-        NomorText.Text = tostring(nomor)
-        NomorText.TextColor3 = Color3.fromRGB(255, 200, 100)
-        NomorText.Font = Enum.Font.GothamBold
-        NomorText.TextSize = 13
-        NomorText.Parent = ItemFrame
-        
-        local NamaText = Instance.new("TextLabel")
-        NamaText.Size = UDim2.new(0, 120, 1, 0)
-        NamaText.Position = UDim2.new(0, 40, 0, 0)
-        NamaText.BackgroundTransparency = 1
-        NamaText.Text = data.nama
-        NamaText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        NamaText.Font = Enum.Font.Gotham
-        NamaText.TextSize = 12
-        NamaText.TextXAlignment = Enum.TextXAlignment.Left
-        NamaText.Parent = ItemFrame
+        local Txt = Instance.new("TextLabel")
+        Txt.Size = UDim2.new(0, 130, 1, 0)
+        Txt.Position = UDim2.new(0, 8, 0, 0)
+        Txt.BackgroundTransparency = 1
+        Txt.Text = no .. ". " .. data.nama
+        Txt.TextColor3 = Color3.new(1,1,1)
+        Txt.Font = Enum.Font.Gotham
+        Txt.TextSize = 12
+        Txt.TextXAlignment = Enum.TextXAlignment.Left
+        Txt.Parent = Item
         
         -- TOMBOL TELEPORT
-        local GoBtn = Instance.new("TextButton")
-        GoBtn.Size = UDim2.new(0, 60, 0, 28)
-        GoBtn.Position = UDim2.new(1, -125, 0.5, -14)
-        GoBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 220)
-        GoBtn.CornerRadius = UDim.new(0, 5)
-        GoBtn.Text = "🚀 PERGI"
-        GoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        GoBtn.Font = Enum.Font.GothamBold
-        GoBtn.TextSize = 10
-        GoBtn.AutoLocalize = false
-        GoBtn.Parent = ItemFrame
+        local BtnGo = Instance.new("TextButton")
+        BtnGo.Size = UDim2.new(0, 50, 1, -6)
+        BtnGo.Position = UDim2.new(1, -55, 0.5, -12)
+        BtnGo.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
+        BtnGo.Text = "🚀"
+        BtnGo.TextSize = 14
+        BtnGo.Parent = Item
         
-        GoBtn.MouseButton1Click:Connect(function()
-            if HumanoidRootPart then
-                HumanoidRootPart.CFrame = data.posisi
+        BtnGo.MouseButton1Click:Connect(function()
+            if RootPart then
+                RootPart.CFrame = data.posisi
             end
-        end)
-        
-        -- TOMBOL HAPUS SATU
-        local DelBtn = Instance.new("TextButton")
-        DelBtn.Size = UDim2.new(0, 50, 0, 28)
-        DelBtn.Position = UDim2.new(1, -55, 0.5, -14)
-        DelBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
-        DelBtn.CornerRadius = UDim.new(0, 5)
-        DelBtn.Text = "🗑️"
-        DelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DelBtn.Font = Enum.Font.GothamBold
-        DelBtn.TextSize = 12
-        DelBtn.AutoLocalize = false
-        DelBtn.Parent = ItemFrame
-        
-        DelBtn.MouseButton1Click:Connect(function()
-            Waypoints[nomor] = nil
-            UpdateWaypointList()
         end)
     end
     
-    -- UPDATE UKURAN SCROLL
-    local jumlah = 0
-    for _ in pairs(Waypoints) do jumlah = jumlah + 1 end
-    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, (jumlah * 46) + 10)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, (#Waypoints * 40))
 end
 
 -- ==============================================
--- 🔧 SIMPAN WAYPOINT — KLIK TOMBOL SAJA
+-- 🖱️ FUNGSI TOMBOL
 -- ==============================================
-SaveBtn.MouseButton1Click:Connect(function()
-    if not HumanoidRootPart then return end
-    
-    local nama = NameInput.Text ~= "" and NameInput.Text or "Waypoint " .. (#Waypoints + 1)
-    local nomor = #Waypoints + 1
-    
-    Waypoints[nomor] = {
-        nama = nama,
-        posisi = HumanoidRootPart.CFrame
-    }
-    
-    NameInput.Text = ""
-    UpdateWaypointList()
+BtnSave.MouseButton1Click:Connect(function()
+    if not RootPart then return end
+    local nama = NamaInput.Text ~= "" and NamaInput.Text or "WP "..(#Waypoints+1)
+    Waypoints[#Waypoints+1] = {nama = nama, posisi = RootPart.CFrame}
+    NamaInput.Text = ""
+    Refresh()
 end)
 
--- ==============================================
--- 🗑️ HAPUS SEMUA
--- ==============================================
-ClearAllBtn.MouseButton1Click:Connect(function()
+BtnClear.MouseButton1Click:Connect(function()
     Waypoints = {}
-    AutoLoopRunning = false
-    if AutoLoopThread then task.cancel(AutoLoopThread) end
-    UpdateWaypointList()
+    Refresh()
 end)
 
--- ==============================================
--- 🛑 STOP SEMUA
--- ==============================================
-StopBtn.MouseButton1Click:Connect(function()
-    AutoLoopRunning = false
-    if AutoLoopThread then task.cancel(AutoLoopThread) end
-end)
-
--- ==============================================
--- ✅ SELESAI!
--- ==============================================
-print("✅ WAYPOINT GUI SIAP! KLIK TOMBOL AJA, GA PERLU NGETIK!")
+print("✅ WAYPOINT SIAP! BISA DI ARCEUS X & DELTA!")
