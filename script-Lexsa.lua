@@ -1,6 +1,6 @@
 -- ============================================
--- 🔮 LEXSA AUTO PET — GROW A GARDEN
--- ✅ ARCEUS X & DELTA ✅ TANPA AUTO-RECOVERY
+-- LEXSA - GROW A GARDEN
+-- ✅ ARCEUS X & DELTA ✅ TANPA TAMBAHAN
 -- ============================================
 
 local Players = game:GetService("Players")
@@ -8,8 +8,6 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local GUI_NAME = "Lexsa_GaGunaAutoRecovery"
 
 -- ============ SETTINGS ============
 local Settings = {
@@ -32,7 +30,9 @@ local listFrame, statusLabel, statsLabel
 -- ============ UPDATE POSISI ============
 local function UpdateChar()
     Character = LocalPlayer.Character
-    if Character then RootPart = Character:FindFirstChild("HumanoidRootPart") end
+    if Character then
+        RootPart = Character:FindFirstChild("HumanoidRootPart")
+    end
 end
 UpdateChar()
 LocalPlayer.CharacterAdded:Connect(UpdateChar)
@@ -66,7 +66,9 @@ local function ScanPets()
                 local dist = (RootPart.Position - root.Position).Magnitude
                 if dist <= Settings.Radius then
                     table.insert(petList, {
-                        id = f.Name, age = GetAge(f), pet = f,
+                        id = f.Name,
+                        age = GetAge(f),
+                        pet = f,
                         selected = selectedPets[f.Name] or false
                     })
                 end
@@ -85,7 +87,10 @@ local function ClickButton(name)
     local holder = action:FindFirstChild("OPTION_HOLDER")
     if not holder then return false end
     local btn = holder:FindFirstChild(name)
-    if btn and btn:IsA("TextButton") then btn:Click() return true end
+    if btn and btn:IsA("TextButton") then
+        btn:Click()
+        return true
+    end
     return false
 end
 
@@ -93,16 +98,30 @@ end
 local function MainLoop()
     for _, data in pairs(petList) do
         if not data.selected then goto skip end
-        if Settings.Pick then ClickButton("PickUp") task.wait(0.15) end
-        if Settings.Place then ClickButton("Place") task.wait(0.15) end
+        
+        if Settings.Pick then
+            ClickButton("PickUp")
+            task.wait(0.15)
+        end
+        if Settings.Place then
+            ClickButton("Place")
+            task.wait(0.15)
+        end
         if Settings.Level and data.age < Settings.TargetAge then
-            if ClickButton("LevelUp") then stats.Level += 1 data.age += 1 end
+            if ClickButton("LevelUp") then
+                stats.Level = stats.Level + 1
+                data.age = data.age + 1
+            end
             task.wait(0.25)
         end
         if Settings.Elephant and data.age >= Settings.TargetAge then
-            if ClickButton("Elephant") then stats.Elephant += 1 data.age = 1 end
+            if ClickButton("Elephant") then
+                stats.Elephant = stats.Elephant + 1
+                data.age = 1
+            end
             task.wait(0.4)
         end
+        
         ::skip::
     end
 end
@@ -112,7 +131,10 @@ local function Toggle()
     isRunning = not isRunning
     if isRunning then
         stats = {Pick=0, Place=0, Level=0, Elephant=0}
-        while isRunning do MainLoop() task.wait(1) end
+        while isRunning do
+            MainLoop()
+            task.wait(1)
+        end
     end
     UpdateStatus()
 end
@@ -128,6 +150,7 @@ end)
 local function UpdatePetList()
     if not listFrame then return end
     listFrame:ClearAllChildren()
+    
     if #petList == 0 then
         local empty = Instance.new("TextLabel")
         empty.Size = UDim2.new(1,0,0,30)
@@ -139,18 +162,21 @@ local function UpdatePetList()
         listFrame.CanvasSize = UDim2.new(0,0,0,30)
         return
     end
-    for i, d in pairs(petList) do
+    
+    for i, data in pairs(petList) do
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1,-10,0,26)
         btn.Position = UDim2.new(0,5,0,(i-1)*28)
-        btn.Text = (d.selected and "☑️" or "☐").." "..(d.age>=Settings.TargetAge and "🐘" or "⬆️").." "..string.sub(d.id,1,10).." | Age "..d.age
-        btn.BackgroundColor3 = d.selected and Color3.fromRGB(0,150,80) or Color3.fromRGB(40,40,80)
+        btn.Text = (data.selected and "☑️" or "☐") .. " " 
+            .. (data.age >= Settings.TargetAge and "🐘" or "⬆️") .. " " 
+            .. string.sub(data.id,1,10) .. " | Age " .. data.age
+        btn.BackgroundColor3 = data.selected and Color3.fromRGB(0,150,80) or Color3.fromRGB(40,40,80)
         btn.TextColor3 = Color3.new(1,1,1)
         btn.Font = Enum.Font.Gotham
         btn.Parent = listFrame
         btn.MouseButton1Click:Connect(function()
-            d.selected = not d.selected
-            selectedPets[d.id] = d.selected
+            data.selected = not data.selected
+            selectedPets[data.id] = data.selected
             UpdatePetList()
         end)
     end
@@ -168,17 +194,15 @@ local function UpdateStatus()
 end
 
 -- ============ BUAT GUI ============
-local function BuatGUI()
-    if PlayerGui:FindFirstChild(GUI_NAME) then return end
+local function CreateGUI()
     local gui = Instance.new("ScreenGui")
-    gui.Name = GUI_NAME
+    gui.Name = "LexsaGUI"
     gui.Parent = PlayerGui
     gui.ResetOnSpawn = false
-    gui.DisplayOrder = 999
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0,420,0,560)
-    frame.Position = UDim2.new(0.02,0,0.03,0)
+    frame.Size = UDim2.new(0, 420, 0, 560)
+    frame.Position = UDim2.new(0.02, 0, 0.03, 0)
     frame.BackgroundColor3 = Color3.fromRGB(15,15,35)
     frame.Active = true
     frame.Draggable = true
@@ -223,7 +247,10 @@ local function BuatGUI()
     allBtn.Font = Enum.Font.GothamBold
     allBtn.Parent = frame
     allBtn.MouseButton1Click:Connect(function()
-        for _,d in pairs(petList) do d.selected=true selectedPets[d.id]=true end
+        for _, d in pairs(petList) do
+            d.selected = true
+            selectedPets[d.id] = true
+        end
         UpdatePetList()
     end)
 
@@ -236,7 +263,10 @@ local function BuatGUI()
     noneBtn.Font = Enum.Font.GothamBold
     noneBtn.Parent = frame
     noneBtn.MouseButton1Click:Connect(function()
-        for _,d in pairs(petList) do d.selected=false selectedPets[d.id]=false end
+        for _, d in pairs(petList) do
+            d.selected = false
+            selectedPets[d.id] = false
+        end
         UpdatePetList()
     end)
 
@@ -248,7 +278,7 @@ local function BuatGUI()
     listFrame.ScrollBarThickness = 3
     listFrame.Parent = frame
 
-    local function makeToggle(text,key,y)
+    local function makeToggle(text, key, y)
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(0.5,0,0,28)
         lbl.Position = UDim2.new(0,5,0,y)
@@ -258,6 +288,7 @@ local function BuatGUI()
         lbl.Font = Enum.Font.GothamBold
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.Parent = frame
+        
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0.3,0,0,26)
         btn.Position = UDim2.new(0.65,0,0,y)
@@ -273,10 +304,10 @@ local function BuatGUI()
         end)
     end
 
-    makeToggle("🐾 Pick","Pick",245)
-    makeToggle("🏠 Place","Place",278)
-    makeToggle("⬆️ Level (→50)","Level",311)
-    makeToggle("🐘 Elephant (50+)","Elephant",344)
+    makeToggle("🐾 Pick", "Pick", 245)
+    makeToggle("🏠 Place", "Place", 278)
+    makeToggle("⬆️ Level (→50)", "Level", 311)
+    makeToggle("🐘 Elephant (50+)", "Elephant", 344)
 
     local tLbl = Instance.new("TextLabel")
     tLbl.Size = UDim2.new(0.25,0,0,25)
@@ -331,5 +362,5 @@ local function BuatGUI()
     ScanPets()
 end
 
-BuatGUI()
-print("✅ LEXSA AUTO PET — SIAP PAKAI!")
+CreateGUI()
+print("✅ LEXSA AUTO PET — SIAP!")
