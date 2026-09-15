@@ -1,366 +1,107 @@
 -- ============================================
--- LEXSA - GROW A GARDEN
--- ✅ ARCEUS X & DELTA ✅ TANPA TAMBAHAN
+-- SET WAYPOINT SAJA | DARI DATA YANG UDAH WORK
+-- Kompatibel: Arceus & Delta
 -- ============================================
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
 
--- ============ SETTINGS ============
-local Settings = {
-    Pick = false,
-    Place = false,
-    Level = false,
-    Elephant = false,
-    TargetAge = 50,
-    Radius = 50,
-}
-
--- ============ VARIABEL ============
+local Player = Players.LocalPlayer
+local Waypoints = {}
+local CurrentIndex = 1
+local isLooping = true
 local isRunning = false
-local petList = {}
-local stats = {Pick=0, Place=0, Level=0, Elephant=0}
-local selectedPets = {}
-local Character, RootPart
-local listFrame, statusLabel, statsLabel
+local moveDelay = 1
 
--- ============ UPDATE POSISI ============
-local function UpdateChar()
-    Character = LocalPlayer.Character
-    if Character then
-        RootPart = Character:FindFirstChild("HumanoidRootPart")
+-- AMBIL POSISI SEKARANG → TAMBAH KE DAFTAR
+local function AddWaypoint(name)
+    local Char = Player.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then
+        return warn("⚠️ Karakter belum dimuat!")
     end
-end
-UpdateChar()
-LocalPlayer.CharacterAdded:Connect(UpdateChar)
-
--- ============ FUNGSI SCAN PET ============
-local function GetAge(pet)
-    if not pet then return 0 end
-    local attrs = pet:FindFirstChild("Attributes")
-    if attrs then
-        for _, c in pairs(attrs:GetChildren()) do
-            local n = c.Name:lower()
-            if n:find("age") or n:find("level") then
-                return tonumber(c.Value) or 0
-            end
-        end
-    end
-    return 0
+    local pos = Char.HumanoidRootPart.CFrame
+    table.insert(Waypoints, {
+        Name = name or "Titik "..#Waypoints+1,
+        Position = pos
+    })
+    print("✅ Ditambah ["..#Waypoints.."]: "..(name or "Titik "..#Waypoints))
 end
 
-local function ScanPets()
-    petList = {}
-    if not RootPart then return end
-    local pm = Workspace:FindFirstChild("PetsPhysical")
-    if not pm then return end
-    local mover = pm:FindFirstChild("PetMover")
-    if not mover then return end
-    for _, f in pairs(mover:GetChildren()) do
-        if f:IsA("Folder") and f.Name:match("{(.-)}") then
-            local root = f:FindFirstChild("RootPart_PetMover_WELD")
-            if root then
-                local dist = (RootPart.Position - root.Position).Magnitude
-                if dist <= Settings.Radius then
-                    table.insert(petList, {
-                        id = f.Name,
-                        age = GetAge(f),
-                        pet = f,
-                        selected = selectedPets[f.Name] or false
-                    })
+-- HAPUS WAYPOINT BERDASARKAN NOMOR
+local function RemoveWaypoint(index)
+    if Waypoints[index] then
+        table.remove(Waypoints, index)
+        print("🗑️ Dihapus titik ke-"..index)
+    end
+end
+
+-- HAPUS SEMUA
+local function ClearAllWaypoints()
+    Waypoints = {}
+    CurrentIndex = 1
+    print("🗑️ Semua waypoint dihapus")
+end
+
+-- PINDAH KE TITIK SEKARANG
+local function MoveToCurrent()
+    if #Waypoints == 0 then return end
+    local wp = Waypoints[CurrentIndex]
+    local Char = Player.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
+    Char.HumanoidRootPart.CFrame = wp.Position
+    print("📍 Sampai: "..wp.Name)
+end
+
+-- MULAI JALAN OTOMATIS
+local function StartWaypoint()
+    if #Waypoints == 0 then
+        return warn("⚠️ Belum ada waypoint! Tambah dulu pakai AddWaypoint()")
+    end
+    isRunning = true
+    task.spawn(function()
+        while isRunning do
+            MoveToCurrent()
+            CurrentIndex += 1
+            if CurrentIndex > #Waypoints then
+                if isLooping then
+                    CurrentIndex = 1
+                    print("🔁 Ulang dari awal")
+                else
+                    isRunning = false
+                    print("✅ Selesai semua titik")
+                    break
                 end
             end
+            task.wait(moveDelay)
         end
-    end
-    UpdatePetList()
-end
-
--- ============ KLIK TOMBOL ============
-local function ClickButton(name)
-    local petUI = PlayerGui:FindFirstChild("PetUI")
-    if not petUI then return false end
-    local action = petUI:FindFirstChild("PetActionUI")
-    if not action then return false end
-    local holder = action:FindFirstChild("OPTION_HOLDER")
-    if not holder then return false end
-    local btn = holder:FindFirstChild(name)
-    if btn and btn:IsA("TextButton") then
-        btn:Click()
-        return true
-    end
-    return false
-end
-
--- ============ MAIN LOOP ============
-local function MainLoop()
-    for _, data in pairs(petList) do
-        if not data.selected then goto skip end
-        
-        if Settings.Pick then
-            ClickButton("PickUp")
-            task.wait(0.15)
-        end
-        if Settings.Place then
-            ClickButton("Place")
-            task.wait(0.15)
-        end
-        if Settings.Level and data.age < Settings.TargetAge then
-            if ClickButton("LevelUp") then
-                stats.Level = stats.Level + 1
-                data.age = data.age + 1
-            end
-            task.wait(0.25)
-        end
-        if Settings.Elephant and data.age >= Settings.TargetAge then
-            if ClickButton("Elephant") then
-                stats.Elephant = stats.Elephant + 1
-                data.age = 1
-            end
-            task.wait(0.4)
-        end
-        
-        ::skip::
-    end
-end
-
--- ============ START / STOP ============
-local function Toggle()
-    isRunning = not isRunning
-    if isRunning then
-        stats = {Pick=0, Place=0, Level=0, Elephant=0}
-        while isRunning do
-            MainLoop()
-            task.wait(1)
-        end
-    end
-    UpdateStatus()
-end
-
--- ============ KEYBIND ============
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.X then Toggle() end
-    if input.KeyCode == Enum.KeyCode.R then ScanPets() end
-end)
-
--- ============ UPDATE UI ============
-local function UpdatePetList()
-    if not listFrame then return end
-    listFrame:ClearAllChildren()
-    
-    if #petList == 0 then
-        local empty = Instance.new("TextLabel")
-        empty.Size = UDim2.new(1,0,0,30)
-        empty.Text = "Tekan R untuk scan"
-        empty.TextColor3 = Color3.fromRGB(200,200,200)
-        empty.BackgroundTransparency = 1
-        empty.Font = Enum.Font.Gotham
-        empty.Parent = listFrame
-        listFrame.CanvasSize = UDim2.new(0,0,0,30)
-        return
-    end
-    
-    for i, data in pairs(petList) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1,-10,0,26)
-        btn.Position = UDim2.new(0,5,0,(i-1)*28)
-        btn.Text = (data.selected and "☑️" or "☐") .. " " 
-            .. (data.age >= Settings.TargetAge and "🐘" or "⬆️") .. " " 
-            .. string.sub(data.id,1,10) .. " | Age " .. data.age
-        btn.BackgroundColor3 = data.selected and Color3.fromRGB(0,150,80) or Color3.fromRGB(40,40,80)
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.Gotham
-        btn.Parent = listFrame
-        btn.MouseButton1Click:Connect(function()
-            data.selected = not data.selected
-            selectedPets[data.id] = data.selected
-            UpdatePetList()
-        end)
-    end
-    listFrame.CanvasSize = UDim2.new(0,0,0,#petList*28)
-end
-
-local function UpdateStatus()
-    if statusLabel then
-        statusLabel.Text = isRunning and "▶️ BERJALAN" or "⏹️ BERHENTI"
-        statusLabel.TextColor3 = isRunning and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100)
-    end
-    if statsLabel then
-        statsLabel.Text = "Pick:"..stats.Pick.." | Place:"..stats.Place.." | Level:"..stats.Level.." | Gajah:"..stats.Elephant
-    end
-end
-
--- ============ BUAT GUI ============
-local function CreateGUI()
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "LexsaGUI"
-    gui.Parent = PlayerGui
-    gui.ResetOnSpawn = false
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 420, 0, 560)
-    frame.Position = UDim2.new(0.02, 0, 0.03, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(15,15,35)
-    frame.Active = true
-    frame.Draggable = true
-    frame.Parent = gui
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1,0,0,35)
-    title.Text = "🔮 LEXSA AUTO PET"
-    title.TextColor3 = Color3.fromRGB(255,200,100)
-    title.BackgroundTransparency = 1
-    title.Font = Enum.Font.GothamBold
-    title.TextScaled = true
-    title.Parent = frame
-
-    local close = Instance.new("TextButton")
-    close.Size = UDim2.new(0,30,0,30)
-    close.Position = UDim2.new(1,-35,0,2)
-    close.Text = "✕"
-    close.TextColor3 = Color3.new(1,1,1)
-    close.BackgroundTransparency = 1
-    close.Font = Enum.Font.GothamBold
-    close.TextScaled = true
-    close.Parent = frame
-    close.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-    local scanBtn = Instance.new("TextButton")
-    scanBtn.Size = UDim2.new(0,100,0,30)
-    scanBtn.Position = UDim2.new(0,10,0,40)
-    scanBtn.Text = "🔍 SCAN (R)"
-    scanBtn.BackgroundColor3 = Color3.fromRGB(0,100,200)
-    scanBtn.TextColor3 = Color3.new(1,1,1)
-    scanBtn.Font = Enum.Font.GothamBold
-    scanBtn.Parent = frame
-    scanBtn.MouseButton1Click:Connect(ScanPets)
-
-    local allBtn = Instance.new("TextButton")
-    allBtn.Size = UDim2.new(0,80,0,30)
-    allBtn.Position = UDim2.new(0,120,0,40)
-    allBtn.Text = "☑️ All"
-    allBtn.BackgroundColor3 = Color3.fromRGB(0,150,80)
-    allBtn.TextColor3 = Color3.new(1,1,1)
-    allBtn.Font = Enum.Font.GothamBold
-    allBtn.Parent = frame
-    allBtn.MouseButton1Click:Connect(function()
-        for _, d in pairs(petList) do
-            d.selected = true
-            selectedPets[d.id] = true
-        end
-        UpdatePetList()
     end)
-
-    local noneBtn = Instance.new("TextButton")
-    noneBtn.Size = UDim2.new(0,80,0,30)
-    noneBtn.Position = UDim2.new(0,210,0,40)
-    noneBtn.Text = "❌ None"
-    noneBtn.BackgroundColor3 = Color3.fromRGB(150,40,40)
-    noneBtn.TextColor3 = Color3.new(1,1,1)
-    noneBtn.Font = Enum.Font.GothamBold
-    noneBtn.Parent = frame
-    noneBtn.MouseButton1Click:Connect(function()
-        for _, d in pairs(petList) do
-            d.selected = false
-            selectedPets[d.id] = false
-        end
-        UpdatePetList()
-    end)
-
-    listFrame = Instance.new("ScrollingFrame")
-    listFrame.Size = UDim2.new(1,-10,0,160)
-    listFrame.Position = UDim2.new(0,5,0,75)
-    listFrame.BackgroundColor3 = Color3.fromRGB(20,20,50)
-    listFrame.CanvasSize = UDim2.new(0,0,0,0)
-    listFrame.ScrollBarThickness = 3
-    listFrame.Parent = frame
-
-    local function makeToggle(text, key, y)
-        local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(0.5,0,0,28)
-        lbl.Position = UDim2.new(0,5,0,y)
-        lbl.Text = text
-        lbl.TextColor3 = Color3.fromRGB(200,200,200)
-        lbl.BackgroundTransparency = 1
-        lbl.Font = Enum.Font.GothamBold
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.Parent = frame
-        
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.3,0,0,26)
-        btn.Position = UDim2.new(0.65,0,0,y)
-        btn.Text = "OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(150,40,40)
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = frame
-        btn.MouseButton1Click:Connect(function()
-            Settings[key] = not Settings[key]
-            btn.Text = Settings[key] and "ON" or "OFF"
-            btn.BackgroundColor3 = Settings[key] and Color3.fromRGB(0,180,80) or Color3.fromRGB(150,40,40)
-        end)
-    end
-
-    makeToggle("🐾 Pick", "Pick", 245)
-    makeToggle("🏠 Place", "Place", 278)
-    makeToggle("⬆️ Level (→50)", "Level", 311)
-    makeToggle("🐘 Elephant (50+)", "Elephant", 344)
-
-    local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(0.25,0,0,25)
-    tLbl.Position = UDim2.new(0,5,0,380)
-    tLbl.Text = "🎯 Target:"
-    tLbl.TextColor3 = Color3.fromRGB(200,200,200)
-    tLbl.BackgroundTransparency = 1
-    tLbl.Font = Enum.Font.GothamBold
-    tLbl.Parent = frame
-
-    local tBox = Instance.new("TextBox")
-    tBox.Size = UDim2.new(0.15,0,0,25)
-    tBox.Position = UDim2.new(0.27,0,0,380)
-    tBox.Text = "50"
-    tBox.TextColor3 = Color3.new(1,1,1)
-    tBox.BackgroundColor3 = Color3.fromRGB(30,30,60)
-    tBox.Font = Enum.Font.GothamBold
-    tBox.Parent = frame
-    tBox.FocusLost:Connect(function()
-        local v = tonumber(tBox.Text)
-        if v then Settings.TargetAge = v end
-    end)
-
-    statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(1,0,0,25)
-    statusLabel.Position = UDim2.new(0,5,0,415)
-    statusLabel.Text = "⏹️ BERHENTI"
-    statusLabel.TextColor3 = Color3.fromRGB(255,100,100)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Font = Enum.Font.GothamBold
-    statusLabel.Parent = frame
-
-    statsLabel = Instance.new("TextLabel")
-    statsLabel.Size = UDim2.new(1,0,0,25)
-    statsLabel.Position = UDim2.new(0,5,0,445)
-    statsLabel.Text = "Pick:0 | Place:0 | Level:0 | Gajah:0"
-    statsLabel.TextColor3 = Color3.fromRGB(150,200,255)
-    statsLabel.BackgroundTransparency = 1
-    statsLabel.Font = Enum.Font.GothamBold
-    statsLabel.Parent = frame
-
-    local info = Instance.new("TextLabel")
-    info.Size = UDim2.new(1,0,0,22)
-    info.Position = UDim2.new(0,5,0,475)
-    info.Text = "📌 X=Start/Stop  |  R=Scan"
-    info.TextColor3 = Color3.fromRGB(180,180,180)
-    info.BackgroundTransparency = 1
-    info.Font = Enum.Font.Gotham
-    info.Parent = frame
-
-    task.wait(0.5)
-    ScanPets()
 end
 
-CreateGUI()
-print("✅ LEXSA AUTO PET — SIAP!")
+-- BERHENTI
+local function StopWaypoint()
+    isRunning = false
+    print("⏹️ Berhenti")
+end
+
+-- UBAH JEDA (detik)
+local function SetDelay(detik)
+    moveDelay = detik
+end
+
+-- AKTIFKAN / MATIKAN LOOP
+local function SetLoop(bool)
+    isLooping = bool
+end
+
+-- ==========================================
+-- 📌 CARA PAKAI — COPY DI KONSOL / EXECUTOR
+-- ==========================================
+-- AddWaypoint("Depan Kebun")   → tambah titik di posisi sekarang
+-- AddWaypoint("Tengah")
+-- AddWaypoint("Toko")
+-- StartWaypoint()              → mulai jalan
+-- StopWaypoint()               → berhenti
+-- RemoveWaypoint(2)            → hapus titik ke-2
+-- ClearAllWaypoints()          → hapus semua
+-- SetDelay(0.5)                → ubah jeda jadi 0.5 detik
+-- SetLoop(false)               → matikan ulang otomatis
