@@ -1,6 +1,6 @@
 -- ==============================================
--- WAYPOINT SYSTEM — VERSI ANTI-HILANG TOTAL 🛡️
--- AUTO-RESTORE < 0.5 DETIK • DATA TETAP AMAN • BARENG BRAINROT JALAN
+-- WAYPOINT SYSTEM — VERSI ANTI-HILANG + BUKA/TUTUP 🛡️
+-- AUTO-RESTORE < 0.5 DETIK • DATA TETAP AMAN • BISA SEMBUNYI
 -- ==============================================
 
 local Players = game:GetService("Players")
@@ -13,6 +13,7 @@ local GUI_NAME = "WP_SYS_9283747_UNIK_TIDAK_DI_HAPUS_PLEASE"
 -- PENYIMPANAN TETAP AMAN — TIDAK AKAN HILANG WALAU GUI DIHAPUS
 local Waypoints = {}
 local Character, RootPart
+local GuiVisible = true -- ⭐ STATUS TAMPILAN GUI
 
 -- ==============================================
 -- 🔧 FUNGSI BUAT GUI — DIPISAH BIAR BISA DIKEMBALIKAN KAPAN AJA
@@ -30,10 +31,23 @@ local function BuatGUI()
     ScreenGui.ResetOnSpawn = false -- ⭐ TETAP ADA WALAU RESPAWN
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+    -- TOMBOL BUKA/TUTUP (SELALU TERLIHAT!)
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Name = "ToggleBtn"
+    ToggleBtn.Size = UDim2.new(0, 40, 0, 32)
+    ToggleBtn.Position = UDim2.new(0.01, 0, 0.02, 0)
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
+    ToggleBtn.Text = "🔽"
+    ToggleBtn.TextColor3 = Color3.new(1,1,1)
+    ToggleBtn.Font = Enum.Font.GothamBold
+    ToggleBtn.TextSize = 14
+    ToggleBtn.Parent = ScreenGui
+
     -- JENDELA UTAMA — BISA DI SERET!
     local Main = Instance.new("Frame")
+    Main.Name = "MainWindow"
     Main.Size = UDim2.new(0, 240, 0, 340)
-    Main.Position = UDim2.new(0.01, 0, 0.02, 0) -- POJOK KIRI ATAS, AMAN
+    Main.Position = UDim2.new(0.01, 45, 0.02, 0) -- Di sebelah tombol toggle
     Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
     Main.BorderSizePixel = 2
     Main.BorderColor3 = Color3.fromRGB(80, 180, 255)
@@ -99,6 +113,17 @@ local function BuatGUI()
     BtnClear.Font = Enum.Font.GothamBold
     BtnClear.TextSize = 12
     BtnClear.Parent = Main
+
+    -- ==============================================
+    -- 🔧 FUNGSI BUKA/TUTUP
+    -- ==============================================
+    local function ToggleGUI()
+        GuiVisible = not GuiVisible
+        Main.Visible = GuiVisible
+        ToggleBtn.Text = GuiVisible and "🔽" or "🔼"
+    end
+
+    ToggleBtn.MouseButton1Click:Connect(ToggleGUI)
 
     -- ==============================================
     -- 🔧 REFRESH DAFTAR — DATA TETAP AMAN!
@@ -168,17 +193,17 @@ local function BuatGUI()
 
     -- KASIH FUNGSI REFRESH KE LUAR BIAR BISA DIPAKAI ULANG
     ScreenGui:SetAttribute("Ready", true)
-    print("✅ WAYPOINT MUNCUL! AMAN & TIDAK GAMPANG HILANG!")
+    print("✅ WAYPOINT MUNCUL! Tek 🔽 buat sembunyi, 🔼 buat munculin!")
 end
 
 -- ==============================================
 -- 🔄 AUTO-RECOVERY — CEK TIAP 0.5 DETIK!
 -- ==============================================
 task.spawn(function()
-    while task.wait(0.5) do -- ⭐ CEK SETIAP 0.5 DETIK!
+    while task.wait(0.5) do
         if not PlayerGui:FindFirstChild(GUI_NAME) then
-            BuatGUI() -- ⭐ HILANG → LANGSUNG BIKIN LAGI OTOMATIS!
-            print("🔄 WAYPOINT DIKEMBALIKAN OTOMATIS! DATA AMAN!")
+            BuatGUI()
+            print("🔄 WAYPOINT DIPULIHKAN! TETAP KLIK 🔽/🔼 BUAT SEMBUNYI/MUNCUL!")
         end
     end
 end)
@@ -198,5 +223,6 @@ LocalPlayer.CharacterAdded:Connect(UpdateChar)
 -- JALANKAN PERTAMA KALI
 BuatGUI()
 
-print("✅ WAYPOINT SYSTEM SIAP — ANTI HILANG TOTAL! 🛡️")
-print("💡 Taruh di pojok layar biar gak ketutup menu lain!")
+print("✅ WAYPOINT SYSTEM SIAP — ANTI HILANG + BUKA/TUTUP! 🛡️")
+print("💡 Klik tombol 🔽 di pojok kiri atas buat sembunyikan GUI")
+print("💡 Klik lagi 🔼 buat munculin. Data waypoint TETAP AMAN!")
